@@ -1,84 +1,36 @@
-// FILE: server/src/repositories/memberships.repo.ts
-import type mongoose from "mongoose";
-import { connectDB } from "../db/connect";
-import { Membership, type MembershipDoc, type MembershipRole } from "../models/Membership";
+// FILE: server/src/models/Membership.ts
+import mongoose, { Schema, type InferSchemaType, type Model } from "mongoose";
 
+export type MembershipRole = "platform_admin" | "tenant_admin" | "member";
 export type MembershipStatus = "active" | "removed";
 
-export type CreateMembershipInput = {
-  tenantId: mongoose.Types.ObjectId;
-  userId: mongoose.Types.ObjectId;
-  role: MembershipRole;
-  status?: MembershipStatus;
-};
+const membershipSchema = new Schema(
+  {
+    tenantId: { type: Schema.Types.ObjectId, ref: "Tenant", required: true, index: true },
+    userId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
 
-export async function createMembership(input: CreateMembershipInput): Promise<MembershipDoc> {
-  await connectDB();
-  return Membership.create({
-    tenantId: input.tenantId,
-    userId: input.userId,
-    role: input.role,
-    status: input.status ?? "active",
-  });
-}
+    role: {
+      type: String,
+      enum: ["platform_admin", "tenant_admin", "member"],
+      required: true,
+    },
 
-export async function findMembership(
-  tenantId: mongoose.Types.ObjectId,
-  userId: mongoose.Types.ObjectId
-): Promise<MembershipDoc | null> {
-  await connectDB();
-  return Membership.findOne({
-    tenantId,
-    userId,
-    status: { $ne: "removed" },
-  }).exec();
-}
+    // ✅ Added for Phase-2 repo logic
+    status: {
+      type: String,
+      enum: ["active", "removed"],
+      default: "active",
+      index: true,
+    },
+  },
+  { timestamps: true }
+);
 
-export async function listMembershipsForTenant(
-  tenantId: mongoose.Types.ObjectId
-): Promise<MembershipDoc[]> {
-  await connectDB();
-  return Membership.find({
-    tenantId,
-    status: { $ne: "removed" },
-  })
-    .sort({ createdAt: -1 })
-    .exec();
-}
+// Optional but recommended: prevent duplicate membership per tenant/user
+membershipSchema.index({ tenantId: 1, userId: 1 }, { unique: true });
 
-export async function listMembershipsForUser(
-  userId: mongoose.Types.ObjectId
-): Promise<MembershipDoc[]> {
-  await connectDB();
-  return Membership.find({
-    userId,
-    status: { $ne: "removed" },
-  })
-    .sort({ createdAt: -1 })
-    .exec();
-}
+type MembershipSchema = InferSchemaType<typeof membershipSchema>;
+export type MembershipDoc = mongoose.HydratedDocument<MembershipSchema>;
 
-export async function updateMembershipRole(
-  tenantId: mongoose.Types.ObjectId,
-  userId: mongoose.Types.ObjectId,
-  role: MembershipRole
-): Promise<MembershipDoc | null> {
-  await connectDB();
-  return Membership.findOneAndUpdate(
-    { tenantId, userId, status: { $ne: "removed" } },
-    { $set: { role } },
-    { new: true }
-  ).exec();
-}
-
-export async function removeMembership(
-  tenantId: mongoose.Types.ObjectId,
-  userId: mongoose.Types.ObjectId
-): Promise<MembershipDoc | null> {
-  await connectDB();
-  return Membership.findOneAndUpdate(
-    { tenantId, userId },
-    { $set: { status: "removed" } },
-    { new: true }
-  ).exec();
-}
+export const Membership: Model<MembershipSchema> =
+  mongoose.models.Membership || mongoose.model("Membership", membershipSchema);

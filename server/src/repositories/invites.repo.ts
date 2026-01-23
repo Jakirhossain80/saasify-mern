@@ -1,16 +1,17 @@
 // FILE: server/src/repositories/invites.repo.ts
 import crypto from "crypto";
-import type mongoose from "mongoose";
+import type { Types } from "mongoose";
+
 import { connectDB } from "../db/connect";
 import { Invite, type InviteDoc, type InviteStatus, type TenantRole } from "../models/Invite";
 
 export type CreateInviteRepoInput = {
-  tenantId: mongoose.Types.ObjectId;
+  tenantId: Types.ObjectId;
   email: string;
   role: TenantRole;
   tokenHash: string;
   expiresAt: Date;
-  invitedByUserId: mongoose.Types.ObjectId;
+  invitedByUserId: Types.ObjectId;
 };
 
 export type ListInvitesRepoOptions = {
@@ -37,7 +38,7 @@ export async function createInvite(input: CreateInviteRepoInput): Promise<Invite
 }
 
 export async function listInvitesByTenant(
-  tenantId: mongoose.Types.ObjectId,
+  tenantId: Types.ObjectId,
   opts: ListInvitesRepoOptions = {}
 ): Promise<InviteDoc[]> {
   await connectDB();
@@ -52,7 +53,7 @@ export async function listInvitesByTenant(
 }
 
 export async function findInviteByTokenHash(
-  tenantId: mongoose.Types.ObjectId,
+  tenantId: Types.ObjectId,
   tokenHash: string
 ): Promise<InviteDoc | null> {
   await connectDB();
@@ -60,10 +61,10 @@ export async function findInviteByTokenHash(
 }
 
 export async function setInviteStatus(
-  tenantId: mongoose.Types.ObjectId,
-  inviteId: mongoose.Types.ObjectId,
+  tenantId: Types.ObjectId,
+  inviteId: Types.ObjectId,
   status: InviteStatus,
-  acceptedByUserId?: mongoose.Types.ObjectId | null
+  acceptedByUserId?: Types.ObjectId | null
 ): Promise<InviteDoc | null> {
   await connectDB();
   return Invite.findOneAndUpdate(

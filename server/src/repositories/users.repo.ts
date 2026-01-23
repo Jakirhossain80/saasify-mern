@@ -1,5 +1,5 @@
 // FILE: server/src/repositories/users.repo.ts
-import type mongoose from "mongoose";
+import mongoose, { type Types } from "mongoose";
 import { connectDB } from "../db/connect";
 import { User, type UserDoc } from "../models/User";
 
@@ -56,7 +56,7 @@ export async function findUserByUserId(userId: string): Promise<UserDoc | null> 
   return User.findById(userId).exec();
 }
 
-export async function findUserById(userId: mongoose.Types.ObjectId): Promise<UserDoc | null> {
+export async function findUserById(userId: Types.ObjectId): Promise<UserDoc | null> {
   await connectDB();
   return User.findById(userId).exec();
 }

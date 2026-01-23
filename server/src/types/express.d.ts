@@ -1,6 +1,6 @@
 // FILE: server/src/types/express.d.ts
 import "express";
-import type mongoose from "mongoose";
+import type { Types } from "mongoose";
 
 declare global {
   namespace Express {
@@ -10,7 +10,7 @@ declare global {
        * - null: no tenant header OR tenant not found
        * - object: resolved tenant identity
        */
-      tenant: { tenantId: mongoose.Types.ObjectId; slug: string } | null;
+      tenant: { tenantId: Types.ObjectId; slug: string } | null;
     }
   }
 }

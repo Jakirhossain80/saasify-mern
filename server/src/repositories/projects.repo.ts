@@ -1,24 +1,26 @@
 // FILE: server/src/repositories/projects.repo.ts
-import type mongoose from "mongoose";
+import type { Types } from "mongoose";
 import { connectDB } from "../db/connect";
 import { Project, type ProjectDoc } from "../models/Project";
 
 export type ProjectStatus = "active" | "archived";
 
 export type CreateProjectRepoInput = {
-  tenantId: mongoose.Types.ObjectId;
+  tenantId: Types.ObjectId;
   title: string;
   description?: string;
-  createdByUserId: mongoose.Types.ObjectId;
+
+  // ✅ removed: createdByUserId (not in schema)
+  // createdByUserId: Types.ObjectId;
 };
 
 export type UpdateProjectRepoInput = {
-  tenantId: mongoose.Types.ObjectId;
-  projectId: mongoose.Types.ObjectId;
+  tenantId: Types.ObjectId;
+  projectId: Types.ObjectId;
   title?: string;
   description?: string;
   status?: ProjectStatus;
-  updatedByUserId: mongoose.Types.ObjectId;
+  updatedByUserId: Types.ObjectId;
 };
 
 export type ListProjectsRepoOptions = {
@@ -28,15 +30,19 @@ export type ListProjectsRepoOptions = {
   offset?: number;
 };
 
-export async function createProjectScoped(input: CreateProjectRepoInput): Promise<ProjectDoc> {
+export async function createProjectScoped(
+  input: CreateProjectRepoInput
+): Promise<ProjectDoc> {
   await connectDB();
 
   const doc = await Project.create({
     tenantId: input.tenantId,
     title: input.title,
     description: input.description ?? "",
-    createdByUserId: input.createdByUserId,
+
+    // ✅ removed: createdByUserId (not in schema)
     updatedByUserId: null,
+
     status: "active",
     deletedAt: null,
   });
@@ -45,15 +51,15 @@ export async function createProjectScoped(input: CreateProjectRepoInput): Promis
 }
 
 export async function findProjectByIdScoped(
-  tenantId: mongoose.Types.ObjectId,
-  projectId: mongoose.Types.ObjectId
+  tenantId: Types.ObjectId,
+  projectId: Types.ObjectId
 ): Promise<ProjectDoc | null> {
   await connectDB();
   return Project.findOne({ _id: projectId, tenantId, deletedAt: null }).exec();
 }
 
 export async function listProjectsScoped(
-  tenantId: mongoose.Types.ObjectId,
+  tenantId: Types.ObjectId,
   options: ListProjectsRepoOptions = {}
 ): Promise<ProjectDoc[]> {
   await connectDB();
@@ -76,10 +82,16 @@ export async function listProjectsScoped(
     ];
   }
 
-  return Project.find(query).sort({ createdAt: -1 }).skip(offset).limit(limit).exec();
+  return Project.find(query)
+    .sort({ createdAt: -1 })
+    .skip(offset)
+    .limit(limit)
+    .exec();
 }
 
-export async function updateProjectScoped(input: UpdateProjectRepoInput): Promise<ProjectDoc | null> {
+export async function updateProjectScoped(
+  input: UpdateProjectRepoInput
+): Promise<ProjectDoc | null> {
   await connectDB();
 
   const $set: Record<string, unknown> = {
@@ -98,9 +110,9 @@ export async function updateProjectScoped(input: UpdateProjectRepoInput): Promis
 }
 
 export async function archiveProjectScoped(
-  tenantId: mongoose.Types.ObjectId,
-  projectId: mongoose.Types.ObjectId,
-  updatedByUserId: mongoose.Types.ObjectId
+  tenantId: Types.ObjectId,
+  projectId: Types.ObjectId,
+  updatedByUserId: Types.ObjectId
 ): Promise<ProjectDoc | null> {
   await connectDB();
   return Project.findOneAndUpdate(
@@ -111,9 +123,9 @@ export async function archiveProjectScoped(
 }
 
 export async function restoreArchivedProjectScoped(
-  tenantId: mongoose.Types.ObjectId,
-  projectId: mongoose.Types.ObjectId,
-  updatedByUserId: mongoose.Types.ObjectId
+  tenantId: Types.ObjectId,
+  projectId: Types.ObjectId,
+  updatedByUserId: Types.ObjectId
 ): Promise<ProjectDoc | null> {
   await connectDB();
   return Project.findOneAndUpdate(
@@ -124,9 +136,9 @@ export async function restoreArchivedProjectScoped(
 }
 
 export async function softDeleteProjectScoped(
-  tenantId: mongoose.Types.ObjectId,
-  projectId: mongoose.Types.ObjectId,
-  updatedByUserId: mongoose.Types.ObjectId
+  tenantId: Types.ObjectId,
+  projectId: Types.ObjectId,
+  updatedByUserId: Types.ObjectId
 ): Promise<ProjectDoc | null> {
   await connectDB();
   return Project.findOneAndUpdate(
@@ -137,9 +149,9 @@ export async function softDeleteProjectScoped(
 }
 
 export async function restoreSoftDeletedProjectScoped(
-  tenantId: mongoose.Types.ObjectId,
-  projectId: mongoose.Types.ObjectId,
-  updatedByUserId: mongoose.Types.ObjectId
+  tenantId: Types.ObjectId,
+  projectId: Types.ObjectId,
+  updatedByUserId: Types.ObjectId
 ): Promise<ProjectDoc | null> {
   await connectDB();
   return Project.findOneAndUpdate(

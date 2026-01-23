@@ -1,5 +1,5 @@
 // FILE: server/src/services/memberships.service.ts
-import type mongoose from "mongoose";
+import type { Types } from "mongoose";
 import type { MembershipDoc, MembershipRole } from "../models/Membership";
 import {
   createMembership,
@@ -17,31 +17,31 @@ export async function addMemberToTenant(input: CreateMembershipInput): Promise<M
 }
 
 export async function getMembership(
-  tenantId: mongoose.Types.ObjectId,
-  userId: mongoose.Types.ObjectId
+  tenantId: Types.ObjectId,
+  userId: Types.ObjectId
 ): Promise<MembershipDoc | null> {
   return findMembership(tenantId, userId);
 }
 
-export async function getTenantMembers(tenantId: mongoose.Types.ObjectId): Promise<MembershipDoc[]> {
+export async function getTenantMembers(tenantId: Types.ObjectId): Promise<MembershipDoc[]> {
   return listMembershipsForTenant(tenantId);
 }
 
-export async function getUserMemberships(userId: mongoose.Types.ObjectId): Promise<MembershipDoc[]> {
+export async function getUserMemberships(userId: Types.ObjectId): Promise<MembershipDoc[]> {
   return listMembershipsForUser(userId);
 }
 
 export async function changeMemberRole(
-  tenantId: mongoose.Types.ObjectId,
-  userId: mongoose.Types.ObjectId,
+  tenantId: Types.ObjectId,
+  userId: Types.ObjectId,
   role: MembershipRole
 ): Promise<MembershipDoc | null> {
   return updateMembershipRole(tenantId, userId, role);
 }
 
 export async function removeMember(
-  tenantId: mongoose.Types.ObjectId,
-  userId: mongoose.Types.ObjectId
+  tenantId: Types.ObjectId,
+  userId: Types.ObjectId
 ): Promise<MembershipDoc | null> {
   return removeMembership(tenantId, userId);
 }
@@ -51,20 +51,22 @@ export async function removeMember(
  * Returns true only when a new membership was created.
  */
 export async function addMembershipIfNotExists(input: {
-  tenantId: mongoose.Types.ObjectId;
-  userId: mongoose.Types.ObjectId;
+  tenantId: Types.ObjectId;
+  userId: Types.ObjectId;
   role: MembershipRole;
   status?: MembershipStatus;
 }): Promise<boolean> {
   const existing = await findMembership(input.tenantId, input.userId);
   if (existing) return false;
 
-  await createMembership({
+  // Build object without passing explicit `undefined` (works well with exactOptionalPropertyTypes)
+  const payload: CreateMembershipInput = {
     tenantId: input.tenantId,
     userId: input.userId,
     role: input.role,
-    status: input.status ?? "active",
-  });
+    ...(input.status ? { status: input.status } : {}),
+  };
 
+  await createMembership(payload);
   return true;
 }

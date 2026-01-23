@@ -1,5 +1,5 @@
 // FILE: server/src/services/projectAccess.service.ts
-import type mongoose from "mongoose";
+import type { Types } from "mongoose";
 import { createAuditLog } from "../repositories/auditLogs.repo";
 import {
   listProjectMembers,
@@ -9,11 +9,11 @@ import {
 import type { ProjectAccessRole, ProjectMembershipDoc } from "../models/ProjectMembership";
 
 export async function assignProjectMember(input: {
-  tenantId: mongoose.Types.ObjectId;
-  projectId: mongoose.Types.ObjectId;
-  userId: mongoose.Types.ObjectId;
+  tenantId: Types.ObjectId;
+  projectId: Types.ObjectId;
+  userId: Types.ObjectId;
   role: ProjectAccessRole;
-  actorUserId: mongoose.Types.ObjectId;
+  actorUserId: Types.ObjectId;
 }): Promise<ProjectMembershipDoc> {
   const doc = await upsertProjectMember({
     tenantId: input.tenantId,
@@ -35,10 +35,10 @@ export async function assignProjectMember(input: {
 }
 
 export async function unassignProjectMember(input: {
-  tenantId: mongoose.Types.ObjectId;
-  projectId: mongoose.Types.ObjectId;
-  userId: mongoose.Types.ObjectId;
-  actorUserId: mongoose.Types.ObjectId;
+  tenantId: Types.ObjectId;
+  projectId: Types.ObjectId;
+  userId: Types.ObjectId;
+  actorUserId: Types.ObjectId;
 }): Promise<ProjectMembershipDoc | null> {
   const doc = await removeProjectMember({
     tenantId: input.tenantId,
@@ -61,8 +61,8 @@ export async function unassignProjectMember(input: {
 }
 
 export async function getProjectMembers(input: {
-  tenantId: mongoose.Types.ObjectId;
-  projectId: mongoose.Types.ObjectId;
+  tenantId: Types.ObjectId;
+  projectId: Types.ObjectId;
 }): Promise<ProjectMembershipDoc[]> {
   return listProjectMembers({ tenantId: input.tenantId, projectId: input.projectId });
 }

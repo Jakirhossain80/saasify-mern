@@ -1,5 +1,5 @@
 // FILE: server/src/services/savedViews.service.ts
-import type mongoose from "mongoose";
+import type { Types } from "mongoose";
 import { createAuditLog } from "../repositories/auditLogs.repo";
 import {
   createSavedView,
@@ -10,19 +10,22 @@ import {
 import type { SavedViewDoc } from "../models/SavedView";
 
 export async function createProjectSavedView(input: {
-  tenantId: mongoose.Types.ObjectId;
-  userId: mongoose.Types.ObjectId;
+  tenantId: Types.ObjectId;
+  userId: Types.ObjectId;
   name: string;
   filters: { status?: "active" | "archived" | null; search?: string | null };
   isPinned?: boolean;
 }): Promise<SavedViewDoc> {
-  const doc = await createSavedView({
+  // exactOptionalPropertyTypes-safe: don't pass `isPinned: undefined`
+  const payload: Parameters<typeof createSavedView>[0] = {
     tenantId: input.tenantId,
     userId: input.userId,
     name: input.name,
     filters: input.filters,
-    isPinned: input.isPinned,
-  });
+    ...(typeof input.isPinned === "boolean" ? { isPinned: input.isPinned } : {}),
+  };
+
+  const doc = await createSavedView(payload);
 
   await createAuditLog({
     scope: "tenant",
@@ -37,16 +40,16 @@ export async function createProjectSavedView(input: {
 }
 
 export async function listProjectSavedViews(input: {
-  tenantId: mongoose.Types.ObjectId;
-  userId: mongoose.Types.ObjectId;
+  tenantId: Types.ObjectId;
+  userId: Types.ObjectId;
 }): Promise<SavedViewDoc[]> {
   return listSavedViews({ tenantId: input.tenantId, userId: input.userId });
 }
 
 export async function setSavedViewPinned(input: {
-  tenantId: mongoose.Types.ObjectId;
-  userId: mongoose.Types.ObjectId;
-  viewId: mongoose.Types.ObjectId;
+  tenantId: Types.ObjectId;
+  userId: Types.ObjectId;
+  viewId: Types.ObjectId;
   isPinned: boolean;
 }): Promise<SavedViewDoc | null> {
   return togglePinSavedView({
@@ -58,9 +61,9 @@ export async function setSavedViewPinned(input: {
 }
 
 export async function removeSavedView(input: {
-  tenantId: mongoose.Types.ObjectId;
-  userId: mongoose.Types.ObjectId;
-  viewId: mongoose.Types.ObjectId;
+  tenantId: Types.ObjectId;
+  userId: Types.ObjectId;
+  viewId: Types.ObjectId;
 }): Promise<SavedViewDoc | null> {
   return deleteSavedView({
     tenantId: input.tenantId,

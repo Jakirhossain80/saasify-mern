@@ -1,5 +1,5 @@
 // FILE: server/src/services/users.service.ts
-import type mongoose from "mongoose";
+import type { Types } from "mongoose";
 import { upsertUserByUserId, findUserById, findUserByUserId } from "../repositories/users.repo";
 import type { UserDoc } from "../models/User";
 
@@ -19,9 +19,9 @@ export async function ensureUser(input: EnsureUserInput): Promise<UserDoc> {
 
   // NOTE:
   // In Phase-2 we keep this as a simple upsert to ensure a user exists.
-  // Our users.repo currently upserts by email (because the provided User model doesn't include `userId`).
+  // Repo currently upserts by email; userId is accepted for future-proofing.
   return upsertUserByUserId({
-    userId: input.userId, // accepted for future-proofing, not currently stored in model
+    userId: input.userId,
     email,
     name: input.name ?? "",
     imageUrl: input.imageUrl ?? "",
@@ -33,6 +33,6 @@ export async function getUserByUserId(userId: string): Promise<UserDoc | null> {
   return findUserByUserId(userId);
 }
 
-export async function getUserById(userId: mongoose.Types.ObjectId): Promise<UserDoc | null> {
+export async function getUserById(userId: Types.ObjectId): Promise<UserDoc | null> {
   return findUserById(userId);
 }

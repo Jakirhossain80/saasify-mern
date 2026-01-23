@@ -15,6 +15,10 @@ const ProjectSchema = new Schema(
       index: true,
     },
 
+    // ✅ Audit fields (so your repo/service can safely set createdBy/updatedBy)
+    createdByUserId: { type: Schema.Types.ObjectId, ref: "User", required: true, index: true },
+    updatedByUserId: { type: Schema.Types.ObjectId, ref: "User", default: null },
+
     // Soft delete (tenant-scoped). Keep records for restore/audit.
     deletedAt: { type: Date, default: null, index: true },
     deletedByUserId: { type: Schema.Types.ObjectId, ref: "User", default: null },
@@ -25,6 +29,9 @@ const ProjectSchema = new Schema(
 // Helpful indexes for tenant-scoped queries
 ProjectSchema.index({ tenantId: 1, status: 1, createdAt: -1 });
 ProjectSchema.index({ tenantId: 1, deletedAt: 1 });
+
+// Helpful audit index
+ProjectSchema.index({ tenantId: 1, createdByUserId: 1, createdAt: -1 });
 
 export type ProjectDoc = InferSchemaType<typeof ProjectSchema> & mongoose.Document;
 

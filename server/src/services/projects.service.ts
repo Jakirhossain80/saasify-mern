@@ -1,5 +1,5 @@
 // FILE: server/src/services/projects.service.ts
-import type mongoose from "mongoose";
+import type { Types } from "mongoose";
 import type { ProjectDoc } from "../models/Project";
 import {
   archiveProjectScoped,
@@ -14,45 +14,51 @@ import {
 } from "../repositories/projects.repo";
 
 export type CreateProjectServiceInput = {
-  tenantId: mongoose.Types.ObjectId;
+  tenantId: Types.ObjectId;
   title: string;
   description?: string;
-  actorUserId: mongoose.Types.ObjectId;
+  actorUserId: Types.ObjectId;
 };
 
 export type UpdateProjectServiceInput = {
-  tenantId: mongoose.Types.ObjectId;
-  projectId: mongoose.Types.ObjectId;
+  tenantId: Types.ObjectId;
+  projectId: Types.ObjectId;
   title?: string;
   description?: string;
   status?: ProjectStatus;
-  actorUserId: mongoose.Types.ObjectId;
+  actorUserId: Types.ObjectId;
 };
 
 export async function createTenantProject(input: CreateProjectServiceInput): Promise<ProjectDoc> {
+  // ✅ Fix 7: Always pass a string (repo create already uses `?? ""` anyway)
+  // This avoids `string | undefined` issues and keeps payload simple.
   return createProjectScoped({
     tenantId: input.tenantId,
     title: input.title,
-    description: input.description,
+    description: input.description ?? "",
     createdByUserId: input.actorUserId,
   });
 }
 
 export async function getProjectScoped(
-  tenantId: mongoose.Types.ObjectId,
-  projectId: mongoose.Types.ObjectId
+  tenantId: Types.ObjectId,
+  projectId: Types.ObjectId
 ): Promise<ProjectDoc | null> {
   return findProjectByIdScoped(tenantId, projectId);
 }
 
 export async function listTenantProjects(
-  tenantId: mongoose.Types.ObjectId,
+  tenantId: Types.ObjectId,
   opts?: { status?: ProjectStatus; search?: string; limit?: number; offset?: number }
 ): Promise<ProjectDoc[]> {
+  // ✅ No change required: repo already handles defaults and optional filters safely
   return listProjectsScoped(tenantId, opts);
 }
 
-export async function updateTenantProject(input: UpdateProjectServiceInput): Promise<ProjectDoc | null> {
+export async function updateTenantProject(
+  input: UpdateProjectServiceInput
+): Promise<ProjectDoc | null> {
+  // ✅ Fix 7: don't pass `undefined` values (repo only sets provided fields)
   return updateProjectScoped({
     tenantId: input.tenantId,
     projectId: input.projectId,
@@ -64,33 +70,33 @@ export async function updateTenantProject(input: UpdateProjectServiceInput): Pro
 }
 
 export async function archiveTenantProject(
-  tenantId: mongoose.Types.ObjectId,
-  projectId: mongoose.Types.ObjectId,
-  actorUserId: mongoose.Types.ObjectId
+  tenantId: Types.ObjectId,
+  projectId: Types.ObjectId,
+  actorUserId: Types.ObjectId
 ): Promise<ProjectDoc | null> {
   return archiveProjectScoped(tenantId, projectId, actorUserId);
 }
 
 export async function restoreArchivedTenantProject(
-  tenantId: mongoose.Types.ObjectId,
-  projectId: mongoose.Types.ObjectId,
-  actorUserId: mongoose.Types.ObjectId
+  tenantId: Types.ObjectId,
+  projectId: Types.ObjectId,
+  actorUserId: Types.ObjectId
 ): Promise<ProjectDoc | null> {
   return restoreArchivedProjectScoped(tenantId, projectId, actorUserId);
 }
 
 export async function softDeleteTenantProject(
-  tenantId: mongoose.Types.ObjectId,
-  projectId: mongoose.Types.ObjectId,
-  actorUserId: mongoose.Types.ObjectId
+  tenantId: Types.ObjectId,
+  projectId: Types.ObjectId,
+  actorUserId: Types.ObjectId
 ): Promise<ProjectDoc | null> {
   return softDeleteProjectScoped(tenantId, projectId, actorUserId);
 }
 
 export async function restoreSoftDeletedTenantProject(
-  tenantId: mongoose.Types.ObjectId,
-  projectId: mongoose.Types.ObjectId,
-  actorUserId: mongoose.Types.ObjectId
+  tenantId: Types.ObjectId,
+  projectId: Types.ObjectId,
+  actorUserId: Types.ObjectId
 ): Promise<ProjectDoc | null> {
   return restoreSoftDeletedProjectScoped(tenantId, projectId, actorUserId);
 }

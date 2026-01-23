@@ -13,6 +13,12 @@ const UserSchema = new Schema(
     },
     name: { type: String, default: "", trim: true },
 
+    // ✅ Needed for Phase-3 email/password login
+    passwordHash: { type: String, default: null },
+
+    // ✅ Used by auth.repo.ts -> setLastSignedInAt()
+    lastSignedInAt: { type: Date, default: null },
+
     /**
      * NextAuth MongoDB Adapter stores `image`
      * Your app previously used `imageUrl`
@@ -21,9 +27,6 @@ const UserSchema = new Schema(
     image: { type: String, default: "", trim: true },
     imageUrl: { type: String, default: "", trim: true },
 
-    /**
-     * ✅ Platform RBAC (global) — canonical field for SaaSify
-     */
     platformRole: {
       type: String,
       enum: ["user", "platformAdmin"],
@@ -31,10 +34,6 @@ const UserSchema = new Schema(
       index: true,
     },
 
-    /**
-     * ⚠️ Legacy alias (kept for backward compatibility if any older logic checks `role`)
-     * Prefer `platformRole` everywhere.
-     */
     role: {
       type: String,
       enum: ["user", "platformAdmin"],
@@ -56,15 +55,12 @@ UserSchema.pre("validate", function () {
   const img = (doc.image ?? "").trim();
   const imgUrl = (doc.imageUrl ?? "").trim();
 
-  // If one exists but the other doesn't, copy it over
   if (!img && imgUrl) doc.image = imgUrl;
   if (!imgUrl && img) doc.imageUrl = img;
 
-  // Normalize & sync platform role fields
   const pr = (doc.platformRole ?? "").trim() as "user" | "platformAdmin" | "";
   const r = (doc.role ?? "").trim() as "user" | "platformAdmin" | "";
 
-  // Prefer platformRole as canonical
   if (!pr && r) doc.platformRole = r;
   if (pr && (!r || r !== pr)) doc.role = pr;
 });

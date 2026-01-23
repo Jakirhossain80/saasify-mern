@@ -37,7 +37,8 @@ export const DateRangeSchema = z
 export const ApiErrorSchema = z.object({
   code: z.string(),
   message: z.string(),
-  fieldErrors: z.record(z.array(z.string())).optional(),
+  // ✅ Zod v4: key schema + value schema required
+  fieldErrors: z.record(z.string(), z.array(z.string())).optional(),
 });
 
 export type ApiErrorShape = z.infer<typeof ApiErrorSchema>;

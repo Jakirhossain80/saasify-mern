@@ -1,11 +1,11 @@
 // FILE: server/src/services/analytics.service.ts
-import type mongoose from "mongoose";
 import { connectDB } from "../db/connect";
-import Tenant from "../models/Tenant";
-import Project from "../models/Project";
-import Membership from "../models/Membership";
+import { Tenant } from "../models/Tenant";
+import { Project } from "../models/Project";
+import { Membership } from "../models/Membership";
+import type { Types } from "mongoose";
 
-export type PlatformDashboardStats = {
+export know type PlatformDashboardStats = {
   totalTenants: number;
   activeTenants: number;
   totalProjects: number;
@@ -22,9 +22,6 @@ export type TenantDashboardStats = {
 export async function getPlatformDashboardStats(): Promise<PlatformDashboardStats> {
   await connectDB();
 
-  // NOTE:
-  // Your current Tenant model uses `isArchived` (no `status` field).
-  // So "active" tenants = isArchived: false
   const [totalTenants, activeTenants, totalProjects] = await Promise.all([
     Tenant.countDocuments({}).exec(),
     Tenant.countDocuments({ isArchived: false }).exec(),
@@ -44,14 +41,13 @@ export async function getPlatformDashboardStats(): Promise<PlatformDashboardStat
 }
 
 export async function getTenantDashboardStats(
-  tenantId: mongoose.Types.ObjectId
+  tenantId: Types.ObjectId
 ): Promise<TenantDashboardStats> {
   await connectDB();
 
   const [activeProjects, archivedProjects, membersCount] = await Promise.all([
     Project.countDocuments({ tenantId, status: "active", deletedAt: null }).exec(),
     Project.countDocuments({ tenantId, status: "archived", deletedAt: null }).exec(),
-    // Works even if `status` field doesn't exist (docs without status will match $ne:"removed")
     Membership.countDocuments({ tenantId, status: { $ne: "removed" } }).exec(),
   ]);
 
