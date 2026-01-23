@@ -1,21 +1,41 @@
 // FILE: server/src/models/Tenant.ts
 import mongoose, { Schema, type InferSchemaType, type Model } from "mongoose";
 
+/**
+ * Tenant model (Phase 4+)
+ * - slug is canonical identity for path-based tenancy: /api/t/:tenantSlug/...
+ * - isArchived=true means tenant is inactive and should behave as NOT_FOUND (404) to avoid leaks
+ */
 const TenantSchema = new Schema(
   {
     name: { type: String, required: true, trim: true },
 
-    // Slug is the canonical tenant identity in Phase 4 routes: /api/t/:tenantSlug/...
-    slug: { type: String, required: true, trim: true, lowercase: true, unique: true, index: true },
+    // Canonical tenant identity for routing
+    slug: {
+      type: String,
+      required: true,
+      trim: true,
+      lowercase: true,
+      unique: true,
+      index: true,
+    },
 
-    // Optional tenant metadata
+    // Optional metadata
     logoUrl: { type: String, default: "", trim: true },
 
-    // Phase-4: treat archived as inactive (404 on archived tenants)
+    // Treat archived as inactive (resolveTenant returns 404)
     isArchived: { type: Boolean, default: false, index: true },
   },
   { timestamps: true }
 );
+
+// Defensive normalization: keep slug trimmed + lowercase even if set programmatically
+TenantSchema.pre("validate", function () {
+  const doc = this as unknown as { slug?: string };
+  if (typeof doc.slug === "string") {
+    doc.slug = doc.slug.trim().toLowerCase();
+  }
+});
 
 export type TenantDoc = InferSchemaType<typeof TenantSchema> & mongoose.Document;
 

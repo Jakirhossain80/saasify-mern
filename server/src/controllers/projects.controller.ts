@@ -2,7 +2,11 @@
 import type { Request, Response, NextFunction } from "express";
 import mongoose from "mongoose";
 import { z } from "zod";
-import { createTenantProject, getTenantProjectById, listTenantProjects } from "../services/projects.service";
+import {
+  createTenantProject,
+  getTenantProjectById,
+  listTenantProjects,
+} from "../services/projects.service";
 import { toObjectId } from "../repositories/projects.repo";
 
 const ListQuerySchema = z.object({
@@ -18,7 +22,7 @@ const CreateProjectSchema = z.object({
 });
 
 function requireTenantContext(req: Request): { tenantId: mongoose.Types.ObjectId; tenantSlug: string } {
-  // resolveTenant guarantees these exist, but keep runtime guards for safety
+  // resolveTenant should set these; keep runtime guards for safety.
   if (!req.tenantId || !req.tenantSlug) {
     throw new Error("TENANT_CONTEXT_MISSING");
   }
@@ -54,7 +58,18 @@ export async function listProjectsHandler(req: Request, res: Response, next: Nex
       offset: parsed.data.offset,
     });
 
-    return res.status(200).json({ items });
+    // ✅ return normalized DTO (avoid leaking internal mongoose doc shape)
+    return res.status(200).json({
+      items: items.map((doc) => ({
+        id: String(doc._id),
+        tenantId: String(doc.tenantId),
+        title: doc.title,
+        description: doc.description,
+        status: doc.status,
+        createdAt: doc.createdAt,
+        updatedAt: doc.updatedAt,
+      })),
+    });
   } catch (err) {
     if (err instanceof Error && err.message === "TENANT_CONTEXT_MISSING") {
       return res.status(404).json({ code: "TENANT_NOT_FOUND", message: "Tenant not found" });
@@ -78,7 +93,7 @@ export async function getProjectHandler(req: Request, res: Response, next: NextF
 
     const doc = await getTenantProjectById({ tenantId, projectId });
     if (!doc) {
-      // ✅ Includes: "project exists but belongs to another tenant" → still 404
+      // ✅ Includes: "project exists but belongs to another tenant" → still 404 (no existence leak)
       return res.status(404).json({ code: "NOT_FOUND", message: "Project not found" });
     }
 
@@ -139,6 +154,9 @@ export async function createProjectHandler(req: Request, res: Response, next: Ne
     }
     if (err instanceof Error && err.message === "UNAUTHORIZED") {
       return res.status(401).json({ code: "UNAUTHORIZED", message: "Unauthorized" });
+    }
+    if (err instanceof Error && err.message === "VALIDATION_ERROR") {
+      return res.status(400).json({ code: "VALIDATION_ERROR", message: "Invalid input" });
     }
     return next(err);
   }

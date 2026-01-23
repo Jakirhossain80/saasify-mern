@@ -15,22 +15,27 @@ export type ListProjectsRepoOptions = {
 export type CreateProjectRepoInput = {
   tenantId: Types.ObjectId;
   title: string;
-  description: string;
+  description?: string;
   createdByUserId: Types.ObjectId;
 };
+
+function escapeRegex(input: string): string {
+  // Prevent regex DoS / accidental special chars
+  return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
 
 export async function createProjectScoped(input: CreateProjectRepoInput): Promise<ProjectDoc> {
   await connectDB();
 
   return Project.create({
     tenantId: input.tenantId,
-    title: input.title,
-    description: input.description ?? "",
+    title: input.title.trim(),
+    description: (input.description ?? "").trim(),
     status: "active",
 
-    // schema requires this in your Project model
+    // Keep these aligned with your Project schema
     createdByUserId: input.createdByUserId,
-    updatedByUserId: null,
+    updatedByUserId: input.createdByUserId, // better default than null for audit fields
 
     deletedAt: null,
     deletedByUserId: null,
@@ -43,7 +48,7 @@ export async function findProjectByIdScoped(
 ): Promise<ProjectDoc | null> {
   await connectDB();
 
-  // ✅ Strict tenant isolation: always include tenantId
+  // ✅ Strict tenant isolation: must include tenantId
   return Project.findOne({ _id: projectId, tenantId, deletedAt: null }).exec();
 }
 
@@ -63,8 +68,9 @@ export async function listProjectsScoped(
 
   if (options.status) query.status = options.status;
 
-  const search = options.search?.trim();
-  if (search) {
+  const searchRaw = options.search?.trim();
+  if (searchRaw) {
+    const search = escapeRegex(searchRaw);
     query.$or = [
       { title: { $regex: search, $options: "i" } },
       { description: { $regex: search, $options: "i" } },
@@ -79,6 +85,7 @@ export async function listProjectsScoped(
 }
 
 export function toObjectId(id: string): Types.ObjectId | null {
-  if (!mongoose.isValidObjectId(id)) return null;
-  return new mongoose.Types.ObjectId(id);
+  const trimmed = id.trim();
+  if (!mongoose.isValidObjectId(trimmed)) return null;
+  return new mongoose.Types.ObjectId(trimmed);
 }
