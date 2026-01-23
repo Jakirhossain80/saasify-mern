@@ -1,27 +1,9 @@
 // FILE: server/src/repositories/projects.repo.ts
-import type { Types } from "mongoose";
+import mongoose, { type Types } from "mongoose";
 import { connectDB } from "../db/connect";
 import { Project, type ProjectDoc } from "../models/Project";
 
 export type ProjectStatus = "active" | "archived";
-
-export type CreateProjectRepoInput = {
-  tenantId: Types.ObjectId;
-  title: string;
-  description?: string;
-
-  // ✅ removed: createdByUserId (not in schema)
-  // createdByUserId: Types.ObjectId;
-};
-
-export type UpdateProjectRepoInput = {
-  tenantId: Types.ObjectId;
-  projectId: Types.ObjectId;
-  title?: string;
-  description?: string;
-  status?: ProjectStatus;
-  updatedByUserId: Types.ObjectId;
-};
 
 export type ListProjectsRepoOptions = {
   status?: ProjectStatus;
@@ -30,24 +12,29 @@ export type ListProjectsRepoOptions = {
   offset?: number;
 };
 
-export async function createProjectScoped(
-  input: CreateProjectRepoInput
-): Promise<ProjectDoc> {
+export type CreateProjectRepoInput = {
+  tenantId: Types.ObjectId;
+  title: string;
+  description: string;
+  createdByUserId: Types.ObjectId;
+};
+
+export async function createProjectScoped(input: CreateProjectRepoInput): Promise<ProjectDoc> {
   await connectDB();
 
-  const doc = await Project.create({
+  return Project.create({
     tenantId: input.tenantId,
     title: input.title,
     description: input.description ?? "",
+    status: "active",
 
-    // ✅ removed: createdByUserId (not in schema)
+    // schema requires this in your Project model
+    createdByUserId: input.createdByUserId,
     updatedByUserId: null,
 
-    status: "active",
     deletedAt: null,
+    deletedByUserId: null,
   });
-
-  return doc;
 }
 
 export async function findProjectByIdScoped(
@@ -55,6 +42,8 @@ export async function findProjectByIdScoped(
   projectId: Types.ObjectId
 ): Promise<ProjectDoc | null> {
   await connectDB();
+
+  // ✅ Strict tenant isolation: always include tenantId
   return Project.findOne({ _id: projectId, tenantId, deletedAt: null }).exec();
 }
 
@@ -89,74 +78,7 @@ export async function listProjectsScoped(
     .exec();
 }
 
-export async function updateProjectScoped(
-  input: UpdateProjectRepoInput
-): Promise<ProjectDoc | null> {
-  await connectDB();
-
-  const $set: Record<string, unknown> = {
-    updatedByUserId: input.updatedByUserId,
-  };
-
-  if (typeof input.title === "string") $set.title = input.title;
-  if (typeof input.description === "string") $set.description = input.description;
-  if (input.status) $set.status = input.status;
-
-  return Project.findOneAndUpdate(
-    { _id: input.projectId, tenantId: input.tenantId, deletedAt: null },
-    { $set },
-    { new: true }
-  ).exec();
-}
-
-export async function archiveProjectScoped(
-  tenantId: Types.ObjectId,
-  projectId: Types.ObjectId,
-  updatedByUserId: Types.ObjectId
-): Promise<ProjectDoc | null> {
-  await connectDB();
-  return Project.findOneAndUpdate(
-    { _id: projectId, tenantId, deletedAt: null },
-    { $set: { status: "archived", updatedByUserId } },
-    { new: true }
-  ).exec();
-}
-
-export async function restoreArchivedProjectScoped(
-  tenantId: Types.ObjectId,
-  projectId: Types.ObjectId,
-  updatedByUserId: Types.ObjectId
-): Promise<ProjectDoc | null> {
-  await connectDB();
-  return Project.findOneAndUpdate(
-    { _id: projectId, tenantId, deletedAt: null },
-    { $set: { status: "active", updatedByUserId } },
-    { new: true }
-  ).exec();
-}
-
-export async function softDeleteProjectScoped(
-  tenantId: Types.ObjectId,
-  projectId: Types.ObjectId,
-  updatedByUserId: Types.ObjectId
-): Promise<ProjectDoc | null> {
-  await connectDB();
-  return Project.findOneAndUpdate(
-    { _id: projectId, tenantId, deletedAt: null },
-    { $set: { deletedAt: new Date(), updatedByUserId } },
-    { new: true }
-  ).exec();
-}
-
-export async function restoreSoftDeletedProjectScoped(
-  tenantId: Types.ObjectId,
-  projectId: Types.ObjectId,
-  updatedByUserId: Types.ObjectId
-): Promise<ProjectDoc | null> {
-  await connectDB();
-  return Project.findOneAndUpdate(
-    { _id: projectId, tenantId, deletedAt: { $ne: null } },
-    { $set: { deletedAt: null, updatedByUserId } },
-    { new: true }
-  ).exec();
+export function toObjectId(id: string): Types.ObjectId | null {
+  if (!mongoose.isValidObjectId(id)) return null;
+  return new mongoose.Types.ObjectId(id);
 }

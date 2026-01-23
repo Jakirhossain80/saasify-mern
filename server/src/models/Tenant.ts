@@ -4,10 +4,14 @@ import mongoose, { Schema, type InferSchemaType, type Model } from "mongoose";
 const TenantSchema = new Schema(
   {
     name: { type: String, required: true, trim: true },
+
+    // Slug is the canonical tenant identity in Phase 4 routes: /api/t/:tenantSlug/...
     slug: { type: String, required: true, trim: true, lowercase: true, unique: true, index: true },
 
     // Optional tenant metadata
     logoUrl: { type: String, default: "", trim: true },
+
+    // Phase-4: treat archived as inactive (404 on archived tenants)
     isArchived: { type: Boolean, default: false, index: true },
   },
   { timestamps: true }
