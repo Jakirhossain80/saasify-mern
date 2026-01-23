@@ -8,14 +8,18 @@ import { Tenant } from "../models/Tenant";
  * Phase 4: Strict tenant resolution + isolation
  * - Resolve tenant from route param: /api/t/:tenantSlug/...
  * - Attach req.tenantId + req.tenantSlug
- * - If tenant not found or archived → 404 (preferred: do not leak tenant existence/state)
+ * - If tenant not found OR archived → 404 (avoid leaking tenant existence/state)
+ *
+ * Notes:
+ * - We intentionally do NOT return 403 here because the tenant context itself is part of the route.
+ *   404 prevents confirming whether a tenant exists or is archived.
  */
 export async function resolveTenant(req: Request, res: Response, next: NextFunction) {
   try {
-    // Primary source (required for Phase-4 slug-based APIs)
+    // Primary source (required for slug-based APIs)
     const slugFromParams = (req.params?.tenantSlug ?? "").trim().toLowerCase();
 
-    // Optional fallback (useful for debugging tools, not the primary API contract)
+    // Optional fallback (useful for debugging tools; NOT the primary API contract)
     const slugFromHeader = (req.header("x-tenant-slug") ?? "").trim().toLowerCase();
 
     const tenantSlug = slugFromParams || slugFromHeader;
@@ -26,10 +30,15 @@ export async function resolveTenant(req: Request, res: Response, next: NextFunct
 
     await connectDB();
 
+    // Prefer explicit isArchived filter (canonical in SaaSify)
     const tenant = await Tenant.findOne({ slug: tenantSlug, isArchived: false }).exec();
 
     if (!tenant) {
-      // 404 is intentional: prevents leaking whether a tenant exists or is archived
+      return res.status(404).json({ code: "TENANT_NOT_FOUND", message: "Tenant not found" });
+    }
+
+    // Extra safety: validate _id before attaching
+    if (!mongoose.isValidObjectId(tenant._id)) {
       return res.status(404).json({ code: "TENANT_NOT_FOUND", message: "Tenant not found" });
     }
 

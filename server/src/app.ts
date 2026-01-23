@@ -3,37 +3,28 @@ import express from "express";
 import cors from "cors";
 import cookieParser from "cookie-parser";
 
-import { env } from "./config/env";
+import { getCorsOptions } from "./config/cors";
 import authRoutes from "./routes/auth.routes";
+import tenantRoutes from "./routes/tenant.routes";
 import { errorHandler } from "./middlewares/errorHandler";
 
 const app = express();
 
-/**
- * ✅ CORS (local dev)
- * - origin must be EXACT (no trailing slash)
- * - credentials true so cookies can be saved/sent
- */
-app.use(
-  cors({
-    origin: env.CLIENT_ORIGIN, // "http://localhost:5173"
-    credentials: true,
-  })
-);
-
-// ✅ parsers
+app.use(cors(getCorsOptions()));
 app.use(express.json());
 app.use(cookieParser());
 
-// ✅ health
 app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
-// ✅ Auth (Phase 3)
+// Auth (Phase 3)
 app.use("/api/auth", authRoutes);
 
-// ✅ Error handler last
+// Tenant-scoped APIs (Phase 4)
+app.use("/api", tenantRoutes);
+
+// Error handler should be last
 app.use(errorHandler);
 
 export default app;
