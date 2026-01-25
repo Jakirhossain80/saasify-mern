@@ -1,6 +1,6 @@
 // FILE: server/src/middlewares/requireTenantMembership.ts
 import type { Request, Response, NextFunction } from "express";
-import mongoose from "mongoose";
+import mongoose, { type Types } from "mongoose";
 import { getActiveMembershipForTenant } from "../services/rbac.service";
 
 /**
@@ -13,24 +13,30 @@ import { getActiveMembershipForTenant } from "../services/rbac.service";
 export async function requireTenantMembership(req: Request, res: Response, next: NextFunction) {
   try {
     const tenantId = req.tenantId;
-    const userId = req.user?.userId;
+    const userIdStr = req.user?.userId ?? null;
 
-    if (!tenantId || !userId || !mongoose.isValidObjectId(userId)) {
+    if (!tenantId || !userIdStr) {
       return res.status(403).json({ code: "FORBIDDEN", message: "Forbidden" });
     }
 
-    const userIdObj = new mongoose.Types.ObjectId(userId);
+    if (!mongoose.isValidObjectId(userIdStr)) {
+      return res.status(403).json({ code: "FORBIDDEN", message: "Forbidden" });
+    }
 
-    const membership = await getActiveMembershipForTenant({ tenantId, userId: userIdObj });
+    const userId = new mongoose.Types.ObjectId(userIdStr) as Types.ObjectId;
+
+    const membership = await getActiveMembershipForTenant({ tenantId, userId });
     if (!membership) {
       return res.status(403).json({ code: "FORBIDDEN", message: "Forbidden" });
     }
 
-    // Store role for downstream checks (requireTenantRole)
+    // If you have req.tenantRole typed in express.d.ts, assign directly:
+    // req.tenantRole = membership.role;
+    // Otherwise keep this minimal local attach:
     (req as Request & { tenantRole?: "tenantAdmin" | "member" }).tenantRole = membership.role;
 
     return next();
-  } catch {
-    return res.status(403).json({ code: "FORBIDDEN", message: "Forbidden" });
+  } catch (err) {
+    return next(err);
   }
 }

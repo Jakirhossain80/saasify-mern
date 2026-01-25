@@ -11,11 +11,10 @@ import { errorHandler } from "./middlewares/errorHandler";
 
 const app = express();
 
-// ✅ CORS must be BEFORE routes (and must allow credentials)
 app.use(cors(getCorsOptions()));
 
-// ✅ Preflight handling (important when sending Authorization header + cookies)
-app.options("*", cors(getCorsOptions()));
+// ✅ FIX: Do NOT use "*" here. Use regex for preflight.
+app.options(/.*/, cors(getCorsOptions()));
 
 app.use(express.json());
 app.use(cookieParser());
@@ -24,16 +23,16 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
-// Phase 3 auth
+// Phase 3
 app.use("/api/auth", authRoutes);
 
-// Phase 5 platform routes (protected inside router)
+// Phase 5 platform routes
 app.use("/api", platformRoutes);
 
-// Phase 4/5 tenant routes (protected inside router)
+// Phase 4/5 tenant routes
 app.use("/api", tenantRoutes);
 
-// Error handler last
+// last
 app.use(errorHandler);
 
 export default app;
