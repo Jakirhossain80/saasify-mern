@@ -9,6 +9,7 @@ import TenantLayout from "../layouts/TenantLayout";
 
 import Landing from "../pages/public/Landing";
 import SignIn from "../pages/auth/SignIn";
+import SignUp from "../pages/auth/SignUp";
 import PlatformDashboard from "../pages/platform/PlatformDashboard";
 import TenantDashboard from "../pages/tenant/TenantDashboard";
 import ProjectsList from "../pages/tenant/ProjectsList";
@@ -26,16 +27,16 @@ export const router = createBrowserRouter([
       // Public
       {
         element: <PublicLayout />,
-        children: [
-          { index: true, element: <Landing /> },
-          // add more public routes here (pricing, docs, etc.)
-        ],
+        children: [{ index: true, element: <Landing /> }],
       },
 
       // Auth
       {
         element: <AuthLayout />,
-        children: [{ path: "sign-in", element: <SignIn /> }],
+        children: [
+          { path: "sign-in", element: <SignIn /> },
+          { path: "sign-up", element: <SignUp /> },
+        ],
       },
 
       // Platform (platformAdmin only)
@@ -51,7 +52,7 @@ export const router = createBrowserRouter([
         children: [{ index: true, element: <PlatformDashboard /> }],
       },
 
-      // Tenant scoped: /t/:tenantSlug/*
+      // Tenant scoped
       {
         path: "t/:tenantSlug",
         element: (

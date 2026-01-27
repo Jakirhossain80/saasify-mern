@@ -2,6 +2,7 @@
 export const API = {
   auth: {
     login: "/auth/login",
+    register: "/auth/register",
     refresh: "/auth/refresh",
     logout: "/auth/logout",
     me: "/auth/me",
@@ -11,6 +12,5 @@ export const API = {
   },
   tenant: {
     projects: (tenantSlug: string) => `/t/${tenantSlug}/projects`,
-    // later: memberships/invites/audit-logs/saved-views...
   },
 } as const;
