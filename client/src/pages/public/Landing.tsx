@@ -8,6 +8,7 @@ type NavItem = { label: string; href: string };
 
 export default function Landing() {
   const user = useAuthStore((s) => s.user);
+  const activeTenantSlug = useAuthStore((s) => s.activeTenantSlug);
   const [mobileOpen, setMobileOpen] = useState(false);
 
   const navItems: NavItem[] = useMemo(
@@ -21,14 +22,25 @@ export default function Landing() {
     []
   );
 
+  const dashboardTo =
+    user?.platformRole === "platformAdmin"
+      ? "/platform"
+      : activeTenantSlug
+        ? `/t/${activeTenantSlug}`
+        : "/select-tenant";
+
+  const tenantDashboardTo = activeTenantSlug ? `/t/${activeTenantSlug}` : "/select-tenant";
+  const tenantProjectsTo = activeTenantSlug ? `/t/${activeTenantSlug}/projects` : "/select-tenant";
+
   return (
-    <div className="min-h-screen bg-white text-slate-900">
+    <div className="max-w-[1680px] mx-auto min-h-screen bg-white text-slate-900">
       {/* Navbar */}
       <header className="sticky top-0 z-30 border-b bg-white/80 backdrop-blur">
-        <div className="mx-auto max-w-6xl px-4 py-3 flex items-center justify-between">
+        <div className="mx-auto max-w-[1680px] px-4 py-3 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border">
-              <ShieldCheck className="h-4 w-4" />
+              
+              <img src="/logo-saasiry.png" alt="logo-image" className="w-4 h-4" />
             </span>
             <span className="font-semibold tracking-tight">SaaSify</span>
           </Link>
@@ -48,7 +60,7 @@ export default function Landing() {
                   {user.email} • <span className="font-medium">{user.platformRole}</span>
                 </span>
                 <Link
-                  to={user.platformRole === "platformAdmin" ? "/platform" : "/t/tenant-a"}
+                  to={dashboardTo}
                   className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm hover:bg-slate-50"
                 >
                   Open dashboard <ArrowRight className="h-4 w-4" />
@@ -111,7 +123,7 @@ export default function Landing() {
                   </>
                 ) : (
                   <Link
-                    to={user.platformRole === "platformAdmin" ? "/platform" : "/t/tenant-a"}
+                    to={dashboardTo}
                     className="flex-1 rounded-lg bg-slate-900 px-3 py-2 text-sm text-white text-center hover:bg-slate-800"
                     onClick={() => setMobileOpen(false)}
                   >
@@ -126,7 +138,7 @@ export default function Landing() {
 
       {/* Hero */}
       <section className="relative">
-        <div className="mx-auto max-w-6xl px-4 py-14 md:py-20">
+        <div className="mx-auto max-w-[1680px] px-4 py-14 md:py-20">
           <div className="grid gap-10 md:grid-cols-2 md:items-center">
             <div className="space-y-6">
               <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs text-slate-700">
@@ -152,12 +164,12 @@ export default function Landing() {
                   Start free <ArrowRight className="h-4 w-4" />
                 </Link>
 
-                <a
-                  href="#docs"
+                <Link
+                  to="/docs"
                   className="inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm hover:bg-slate-50"
                 >
                   View docs <ArrowRight className="h-4 w-4" />
-                </a>
+                </Link>
               </div>
 
               {/* Trust row */}
@@ -217,7 +229,7 @@ export default function Landing() {
 
       {/* Features */}
       <section id="features" className="border-t">
-        <div className="mx-auto max-w-6xl px-4 py-14">
+        <div className="mx-auto max-w-[1680px] px-4 py-14">
           <div className="max-w-2xl space-y-2">
             <h2 className="text-2xl md:text-3xl font-semibold">Everything a tenant-first SaaS needs</h2>
             <p className="text-slate-600 text-sm md:text-base">
@@ -257,7 +269,7 @@ export default function Landing() {
 
       {/* How it works */}
       <section className="border-t bg-slate-50">
-        <div className="mx-auto max-w-6xl px-4 py-14">
+        <div className="mx-auto max-w-[1680px] px-4 py-14">
           <div className="max-w-2xl space-y-2">
             <h2 className="text-2xl md:text-3xl font-semibold">How it works</h2>
             <p className="text-slate-600 text-sm md:text-base">
@@ -276,23 +288,24 @@ export default function Landing() {
           </div>
 
           <div className="mt-8 flex flex-wrap gap-2">
-            <Link
-              to="/platform"
-              className="rounded-lg border bg-white px-4 py-2 text-sm hover:bg-slate-100"
-            >
+            <Link to="/platform" className="rounded-lg border bg-white px-4 py-2 text-sm hover:bg-slate-100">
               Platform dashboard
             </Link>
+
             <Link
-              to="/t/tenant-a"
+              to={tenantDashboardTo}
               className="rounded-lg border bg-white px-4 py-2 text-sm hover:bg-slate-100"
+              title={!activeTenantSlug ? "Select a tenant first" : undefined}
             >
-              Tenant dashboard (example)
+              Tenant dashboard
             </Link>
+
             <Link
-              to="/t/tenant-a/projects"
+              to={tenantProjectsTo}
               className="rounded-lg border bg-white px-4 py-2 text-sm hover:bg-slate-100"
+              title={!activeTenantSlug ? "Select a tenant first" : undefined}
             >
-              Projects (example)
+              Projects
             </Link>
           </div>
         </div>
@@ -300,7 +313,7 @@ export default function Landing() {
 
       {/* Pricing */}
       <section id="pricing" className="border-t">
-        <div className="mx-auto max-w-6xl px-4 py-14">
+        <div className="mx-auto max-w-[1680px] px-4 py-14">
           <div className="max-w-2xl space-y-2">
             <h2 className="text-2xl md:text-3xl font-semibold">Simple pricing</h2>
             <p className="text-slate-600 text-sm md:text-base">
@@ -337,7 +350,7 @@ export default function Landing() {
 
       {/* Security */}
       <section id="security" className="border-t bg-slate-50">
-        <div className="mx-auto max-w-6xl px-4 py-14">
+        <div className="mx-auto max-w-[1680px] px-4 py-14">
           <div className="max-w-2xl space-y-2">
             <h2 className="text-2xl md:text-3xl font-semibold">Security & isolation by design</h2>
             <p className="text-slate-600 text-sm md:text-base">
@@ -365,7 +378,7 @@ export default function Landing() {
 
       {/* Docs (placeholder) */}
       <section id="docs" className="border-t">
-        <div className="mx-auto max-w-6xl px-4 py-14">
+        <div className="mx-auto max-w-[1680px] px-4 py-14">
           <div className="max-w-2xl space-y-2">
             <h2 className="text-2xl md:text-3xl font-semibold">Docs</h2>
             <p className="text-slate-600 text-sm md:text-base">
@@ -388,7 +401,7 @@ export default function Landing() {
 
       {/* FAQ */}
       <section className="border-t bg-slate-50">
-        <div className="mx-auto max-w-6xl px-4 py-14">
+        <div className="mx-auto max-w-[1680px] px-4 py-14">
           <div className="max-w-2xl space-y-2">
             <h2 className="text-2xl md:text-3xl font-semibold">FAQ</h2>
             <p className="text-slate-600 text-sm md:text-base">
@@ -427,7 +440,7 @@ export default function Landing() {
 
       {/* Final CTA */}
       <section className="border-t">
-        <div className="mx-auto max-w-6xl px-4 py-14">
+        <div className="mx-auto max-w-[1680px] px-4 py-14">
           <div className="rounded-2xl border bg-white p-6 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="space-y-2">
               <div className="text-xl md:text-2xl font-semibold">Start organizing projects across tenants today.</div>
@@ -456,7 +469,7 @@ export default function Landing() {
 
       {/* Footer */}
       <footer id="contact" className="border-t">
-        <div className="mx-auto max-w-6xl px-4 py-10">
+        <div className="mx-auto max-w-[1680px] px-4 py-10">
           <div className="grid gap-8 md:grid-cols-4">
             <div className="space-y-2">
               <div className="font-semibold">SaaSify</div>
@@ -471,24 +484,24 @@ export default function Landing() {
                 <a href="#features" className="block hover:text-slate-900">
                   Features
                 </a>
-                <a href="#pricing" className="block hover:text-slate-900">
+                <Link to="/pricing" className="block hover:text-slate-900">
                   Pricing
-                </a>
-                <a href="#docs" className="block hover:text-slate-900">
+                </Link>
+                <Link to="/docs" className="block hover:text-slate-900">
                   Docs
-                </a>
-                <a href="#security" className="block hover:text-slate-900">
+                </Link>
+                <Link to="/security" className="block hover:text-slate-900">
                   Security
-                </a>
+                </Link>
               </div>
             </div>
 
             <div className="space-y-2 text-sm">
               <div className="font-medium">Company</div>
               <div className="text-slate-600 space-y-1">
-                <a href="#contact" className="block hover:text-slate-900">
+                <Link to="/contact" className="block hover:text-slate-900">
                   Contact
-                </a>
+                </Link>
                 <span className="block">About (coming soon)</span>
               </div>
             </div>
@@ -513,9 +526,7 @@ export default function Landing() {
             </div>
           </div>
 
-          <div className="mt-8 border-t pt-6 text-xs text-slate-500">
-            © {new Date().getFullYear()} SaaSify. All rights reserved.
-          </div>
+          <div className="mt-8 border-t pt-6 text-xs text-slate-500">© {new Date().getFullYear()} SaaSify. All rights reserved.</div>
         </div>
       </footer>
     </div>
@@ -543,9 +554,7 @@ function FeatureCard({ title, desc }: { title: string; desc: string }) {
 function StepCard({ step, title, desc }: { step: string; title: string; desc: string }) {
   return (
     <div className="rounded-2xl border bg-white p-5 shadow-sm">
-      <div className="inline-flex h-8 w-8 items-center justify-center rounded-lg border text-sm font-semibold">
-        {step}
-      </div>
+      <div className="inline-flex h-8 w-8 items-center justify-center rounded-lg border text-sm font-semibold">{step}</div>
       <div className="mt-3 font-semibold">{title}</div>
       <div className="mt-2 text-sm text-slate-600 leading-relaxed">{desc}</div>
     </div>
@@ -580,20 +589,13 @@ function PricingCard({
   featured?: boolean;
 }) {
   return (
-    <div
-      className={[
-        "rounded-2xl border bg-white p-6 shadow-sm",
-        featured ? "ring-2 ring-slate-900" : "",
-      ].join(" ")}
-    >
+    <div className={["rounded-2xl border bg-white p-6 shadow-sm", featured ? "ring-2 ring-slate-900" : ""].join(" ")}>
       <div className="flex items-start justify-between">
         <div>
           <div className="font-semibold">{name}</div>
           <div className="text-xs text-slate-500 mt-1">{note}</div>
         </div>
-        {featured && (
-          <div className="rounded-full bg-slate-900 px-3 py-1 text-xs text-white">Popular</div>
-        )}
+        {featured && <div className="rounded-full bg-slate-900 px-3 py-1 text-xs text-white">Popular</div>}
       </div>
 
       <div className="mt-4">

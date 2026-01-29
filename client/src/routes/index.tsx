@@ -8,6 +8,7 @@ import PlatformLayout from "../layouts/PlatformLayout";
 import TenantLayout from "../layouts/TenantLayout";
 
 import Landing from "../pages/public/Landing";
+import Docs from "../pages/public/Docs";
 import SignIn from "../pages/auth/SignIn";
 import SignUp from "../pages/auth/SignUp";
 import PlatformDashboard from "../pages/platform/PlatformDashboard";
@@ -17,6 +18,9 @@ import NotFound from "../pages/NotFound";
 
 import ProtectedRoute from "../components/guards/ProtectedRoute";
 import RoleGate from "../components/guards/RoleGate";
+import Security from "../pages/public/Security";
+import Pricing from "../pages/public/Pricing";
+import Contact from "../pages/public/Contact";
 
 export const router = createBrowserRouter([
   {
@@ -27,7 +31,13 @@ export const router = createBrowserRouter([
       // Public
       {
         element: <PublicLayout />,
-        children: [{ index: true, element: <Landing /> }],
+        children: [
+          { index: true, element: <Landing /> },
+          { path: "docs", element: <Docs /> },
+          { path: "security", element: <Security /> },
+          { path: "pricing", element: <Pricing /> },
+          { path: "contact", element: <Contact /> },
+        ],
       },
 
       // Auth
