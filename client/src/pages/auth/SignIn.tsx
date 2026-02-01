@@ -6,7 +6,9 @@ import { useAuth } from "../../hooks/useAuth";
 export default function SignIn() {
   const nav = useNavigate();
   const loc = useLocation();
-  const { login, user } = useAuth();
+
+  // ✅ IMPORTANT: do NOT bootstrap from inside SignIn page
+  const { login, user, isBootstrapped } = useAuth({ bootstrap: false });
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -14,8 +16,9 @@ export default function SignIn() {
   const from = (loc.state as any)?.from as string | undefined;
 
   useEffect(() => {
-    if (user) nav(from || "/", { replace: true });
-  }, [user, nav, from]);
+    // If already logged in (for example after a manual redirect), go back
+    if (isBootstrapped && user) nav(from || "/", { replace: true });
+  }, [user, nav, from, isBootstrapped]);
 
   return (
     <div className="space-y-4">
@@ -28,7 +31,7 @@ export default function SignIn() {
         className="space-y-3"
         onSubmit={(e) => {
           e.preventDefault();
-          login.mutate({ email, password });
+          login.mutate({ email: email.trim().toLowerCase(), password });
         }}
       >
         <div className="space-y-1">
@@ -37,7 +40,7 @@ export default function SignIn() {
             className="w-full border rounded px-3 py-2 text-sm"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            placeholder="tenantadmina@saasify.dev"
+            placeholder="you@saasify.dev"
             autoComplete="email"
           />
         </div>

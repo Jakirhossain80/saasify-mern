@@ -19,24 +19,39 @@ http.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   return config;
 });
 
-// Refresh-once flow for 401s (expired access token)
-// Assumes POST /auth/refresh sets/uses refresh cookie and returns { accessToken, user? }
+// -------- Refresh-once flow for 401s --------
 let isRefreshing = false;
 let refreshPromise: Promise<string | null> | null = null;
 
+// Safely clear auth no matter what your store function name is
+function clearAuthSafely() {
+  const store: any = useAuthStore.getState();
+
+  if (typeof store.clearAuth === "function") store.clearAuth();
+  else if (typeof store.clear === "function") store.clear();
+  else {
+    // fallback (in case you rename things later)
+    if (typeof store.setAccessToken === "function") store.setAccessToken(null);
+    if (typeof store.setUser === "function") store.setUser(null);
+  }
+}
+
 async function refreshAccessToken(): Promise<string | null> {
   try {
+    // Use bare axios to avoid interceptor recursion
     const { data } = await axios.post(
       `${baseURL}/auth/refresh`,
       {},
       { withCredentials: true }
     );
+
     const nextToken = data?.accessToken ?? null;
     if (nextToken) useAuthStore.getState().setAccessToken(nextToken);
     if (data?.user) useAuthStore.getState().setUser(data.user);
+
     return nextToken;
   } catch {
-    useAuthStore.getState().clearAuth();
+    clearAuthSafely();
     return null;
   }
 }
@@ -45,11 +60,29 @@ http.interceptors.response.use(
   (res) => res,
   async (error: AxiosError<any>) => {
     const status = error.response?.status;
-    const original = error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
+    const original =
+      error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
 
     if (!original) throw error;
+
+    // Only handle 401
     if (status !== 401) throw error;
+
+    // Prevent infinite retry
     if (original._retry) throw error;
+
+    // Don't attempt refresh for auth endpoints (avoid loops)
+    const url = (original.url ?? "").toString();
+    const isAuthCall =
+      url.includes("/auth/login") ||
+      url.includes("/auth/register") ||
+      url.includes("/auth/refresh") ||
+      url.includes("/auth/logout");
+
+    if (isAuthCall) {
+      clearAuthSafely();
+      throw error;
+    }
 
     original._retry = true;
 
@@ -61,10 +94,18 @@ http.interceptors.response.use(
     }
 
     const newToken = await refreshPromise;
-    if (!newToken) throw error;
 
+    // If refresh failed -> user must sign in again
+    if (!newToken) {
+      clearAuthSafely();
+      throw error;
+    }
+
+    // Retry original request with new token
     original.headers = original.headers ?? {};
     original.headers.Authorization = `Bearer ${newToken}`;
     return http.request(original);
   }
 );
+
+

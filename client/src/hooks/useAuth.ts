@@ -6,7 +6,13 @@ import { API } from "../api/endpoints";
 import { useAuthStore } from "../store/auth.store";
 import type { LoginResponse, AuthUser } from "../types/auth.types";
 
-export function useAuth() {
+type UseAuthOptions = {
+  bootstrap?: boolean;
+};
+
+export function useAuth(options: UseAuthOptions = {}) {
+  const shouldBootstrap = options.bootstrap ?? true;
+
   const accessToken = useAuthStore((s) => s.accessToken);
   const user = useAuthStore((s) => s.user);
   const isBootstrapped = useAuthStore((s) => s.isBootstrapped);
@@ -16,36 +22,33 @@ export function useAuth() {
   const setBootstrapped = useAuthStore((s) => s.setBootstrapped);
   const clearAuth = useAuthStore((s) => s.clearAuth);
 
-  // Bootstrap auth on app load:
-  // - If accessToken missing, try refresh (cookie-based)
-  // - Then optionally call /me to get user
   const bootstrap = useQuery({
     queryKey: ["auth", "bootstrap"],
-    enabled: !isBootstrapped,
+    enabled: shouldBootstrap && !isBootstrapped,
     queryFn: async () => {
-      // Try refresh if no access token
-      if (!useAuthStore.getState().accessToken) {
-        try {
-          const { data } = await http.post(API.auth.refresh, {});
-          if (data?.accessToken) setAccessToken(data.accessToken);
-          if (data?.user) setUser(data.user);
-        } catch {
-          // ignore; user remains logged out
+      try {
+        if (!useAuthStore.getState().accessToken) {
+          try {
+            const { data } = await http.post(API.auth.refresh, {});
+            if (data?.accessToken) setAccessToken(data.accessToken);
+          } catch {
+            // ignore
+          }
         }
-      }
 
-      // If still no user but we have a token, fetch /me
-      if (useAuthStore.getState().accessToken && !useAuthStore.getState().user) {
-        try {
-          const { data } = await http.get<{ user: AuthUser }>(API.auth.me);
-          setUser(data.user);
-        } catch {
-          clearAuth();
+        if (useAuthStore.getState().accessToken && !useAuthStore.getState().user) {
+          try {
+            const { data } = await http.get<{ user: AuthUser }>(API.auth.me);
+            setUser(data.user);
+          } catch {
+            clearAuth();
+          }
         }
-      }
 
-      setBootstrapped(true);
-      return true;
+        return true;
+      } finally {
+        setBootstrapped(true);
+      }
     },
     staleTime: 0,
   });
@@ -58,6 +61,7 @@ export function useAuth() {
     onSuccess: (data) => {
       setAccessToken(data.accessToken);
       setUser(data.user);
+      setBootstrapped(true);
       toast.success("Signed in");
     },
     onError: (err: any) => {
@@ -65,17 +69,26 @@ export function useAuth() {
     },
   });
 
+  /**
+   * ✅ PRODUCTION FIX:
+   * Clear client auth state immediately on click (optimistic logout),
+   * then call server to revoke refresh session + clear cookie.
+   */
   const logout = useMutation({
     mutationFn: async () => {
+      // Still call server (revoke session + clear cookie)
       await http.post(API.auth.logout, {});
     },
-    onSuccess: () => {
+    onMutate: async () => {
+      // ✅ Immediately update UI (no waiting for server)
       clearAuth();
+      setBootstrapped(true);
+    },
+    onSuccess: () => {
       toast.success("Signed out");
     },
     onError: () => {
-      // still clear local state
-      clearAuth();
+      // We already cleared local state; still show success UX
       toast.success("Signed out");
     },
   });

@@ -1,25 +1,21 @@
 // FILE: client/src/components/guards/ProtectedRoute.tsx
+import type { ReactNode } from "react";
 import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "../../hooks/useAuth";
+import { useAuthStore } from "../../store/auth.store";
 
-export default function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const location = useLocation();
-  const { user, isBootstrapped } = useAuth();
+export default function ProtectedRoute({ children }: { children: ReactNode }) {
+  const loc = useLocation();
+  const user = useAuthStore((s) => s.user);
+  const isBootstrapped = useAuthStore((s) => s.isBootstrapped);
 
-  // Wait until bootstrap finishes (refresh/me)
+  // ✅ Wait for bootstrap to finish before deciding
   if (!isBootstrapped) {
-    return (
-      <div className="min-h-[60vh] flex items-center justify-center text-sm text-muted-foreground">
-        Loading...
-      </div>
-    );
+    return <div className="p-6 text-sm text-slate-600">Loading session…</div>;
   }
 
   if (!user) {
-    return <Navigate to="/sign-in" replace state={{ from: location.pathname }} />;
+    return <Navigate to="/sign-in" replace state={{ from: loc.pathname }} />;
   }
 
   return <>{children}</>;
 }
-
-
