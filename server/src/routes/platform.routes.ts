@@ -5,6 +5,7 @@ import { requireAuth } from "../middlewares/requireAuth";
 import { requirePlatformAdmin } from "../middlewares/requirePlatformAdmin";
 
 import {
+  createTenantHandler,
   getTenantDetailsHandler,
   listAllTenantsHandler,
   setTenantSuspendedHandler,
@@ -14,21 +15,32 @@ import {
 const router = Router();
 
 /**
- * Platform routes (Phase 5+):
- * - requireAuth: valid access token (Bearer)
- * - requirePlatformAdmin: platformAdmin only
+ * ✅ IMPORTANT:
+ * This router should be mounted in app.ts like:
+ * app.use("/api", platformRoutes)
  *
- * NOTE:
- * We attach guards once for the whole /platform namespace to keep routes clean and consistent.
+ * So inside this file we define routes as "/platform/..."
+ * and we attach guards once for the whole platform namespace.
  */
 router.use("/platform", requireAuth, requirePlatformAdmin);
 
 /**
  * Module 1: Tenants (platform)
  */
+
+// ✅ Create tenant
+router.post("/platform/tenants", createTenantHandler);
+
+// List tenants
 router.get("/platform/tenants", listAllTenantsHandler);
+
+// Tenant details
 router.get("/platform/tenants/:tenantId", getTenantDetailsHandler);
+
+// Suspend/unsuspend (maps to isArchived)
 router.patch("/platform/tenants/:tenantId/suspend", setTenantSuspendedHandler);
+
+// Soft delete
 router.delete("/platform/tenants/:tenantId", softDeleteTenantHandler);
 
 export default router;

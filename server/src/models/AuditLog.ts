@@ -2,6 +2,7 @@
 import mongoose, { Schema, type InferSchemaType, type Model } from "mongoose";
 
 export type AuditScope = "platform" | "tenant";
+
 export type AuditAction =
   | "tenant.created"
   | "tenant.status_changed"
@@ -14,6 +15,8 @@ export type AuditAction =
   | "project.restored"
   | "project.deleted"
   | "membership.role_changed";
+
+export type AuditEntityType = "Tenant" | "Project" | "Invite" | "Membership" | "User";
 
 const AuditLogSchema = new Schema(
   {
@@ -36,10 +39,12 @@ const AuditLogSchema = new Schema(
       index: true,
     },
     action: { type: String, required: true, index: true },
+
     entity: {
       type: { type: String, required: true }, // e.g. "Project", "Tenant", "Invite"
-      id: { type: String, required: true }, // stringified ObjectId
+      id: { type: String, required: true },   // stringified ObjectId
     },
+
     meta: { type: Schema.Types.Mixed, default: {} }, // small payload, avoid PII
     ip: { type: String, default: null },
     userAgent: { type: String, default: null },

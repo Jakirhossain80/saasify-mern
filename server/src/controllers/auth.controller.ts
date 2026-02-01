@@ -55,12 +55,22 @@ export async function postLogin(req: Request, res: Response, next: NextFunction)
     });
   } catch (err) {
     if (err instanceof Error && err.message === "INVALID_CREDENTIALS") {
-      return res.status(401).json({ code: "INVALID_CREDENTIALS", message: "Invalid email or password" });
+      return res
+        .status(401)
+        .json({ code: "INVALID_CREDENTIALS", message: "Invalid email or password" });
     }
     return next(err);
   }
 }
 
+/**
+ * ✅ REGISTER (Option A)
+ * - Creates ONLY the user
+ * - Does NOT create tenant
+ * - Does NOT create membership
+ * - Does NOT set refresh cookie
+ * - Client should redirect to Sign In after success
+ */
 export async function postRegister(req: Request, res: Response, next: NextFunction) {
   try {
     const parsed = RegisterSchema.safeParse(req.body);
@@ -72,7 +82,7 @@ export async function postRegister(req: Request, res: Response, next: NextFuncti
       });
     }
 
-    const result = await registerWithEmailPassword({
+    const created = await registerWithEmailPassword({
       name: parsed.data.name,
       email: parsed.data.email,
       password: parsed.data.password,
@@ -80,21 +90,17 @@ export async function postRegister(req: Request, res: Response, next: NextFuncti
       ip: getClientIp(req),
     });
 
-    res.cookie("refreshToken", result.refreshToken, {
-      ...getRefreshCookieOptions(),
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
-    // ✅ Include tenant info so client can redirect to /t/:tenantSlug immediately
+    // ✅ No cookies here. No auto-login.
     return res.status(201).json({
-      accessToken: result.accessToken,
-      user: result.user,
-      tenant: result.tenant,
-      membership: result.membership,
+      ok: true,
+      message: "Account created. Please sign in.",
+      user: created.user,
     });
   } catch (err) {
     if (err instanceof Error && err.message === "EMAIL_ALREADY_EXISTS") {
-      return res.status(409).json({ code: "EMAIL_ALREADY_EXISTS", message: "Email already in use" });
+      return res
+        .status(409)
+        .json({ code: "EMAIL_ALREADY_EXISTS", message: "Email already in use" });
     }
     return next(err);
   }

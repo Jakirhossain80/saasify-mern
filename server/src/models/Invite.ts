@@ -2,13 +2,13 @@
 import mongoose, { Schema, type InferSchemaType, type Model } from "mongoose";
 
 export type InviteStatus = "pending" | "accepted" | "revoked" | "expired";
-export type TenantRole = "tenant_admin" | "member";
+export type TenantRole = "tenantAdmin" | "member";
 
 const InviteSchema = new Schema(
   {
     tenantId: { type: Schema.Types.ObjectId, ref: "Tenant", required: true, index: true },
     email: { type: String, required: true, trim: true, lowercase: true, index: true },
-    role: { type: String, required: true, enum: ["tenant_admin", "member"], default: "member" },
+    role: { type: String, required: true, enum: ["tenantAdmin", "member"], default: "member" },
     tokenHash: { type: String, required: true, index: true }, // store hash only
     status: {
       type: String,

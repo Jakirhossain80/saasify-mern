@@ -20,21 +20,17 @@ const UserSchema = new Schema(
     lastSignedInAt: { type: Date, default: null },
 
     /**
-     * NextAuth MongoDB Adapter stores `image`
-     * Your app previously used `imageUrl`
-     * ✅ Support BOTH, keep them in sync.
+     * Keep BOTH image fields for compatibility (NextAuth stores `image`)
+     * Your app may use `imageUrl`
      */
     image: { type: String, default: "", trim: true },
     imageUrl: { type: String, default: "", trim: true },
 
+    /**
+     * ✅ Platform role is the ONLY platform-level role field.
+     * Tenant roles live in Membership documents.
+     */
     platformRole: {
-      type: String,
-      enum: ["user", "platformAdmin"],
-      default: "user",
-      index: true,
-    },
-
-    role: {
       type: String,
       enum: ["user", "platformAdmin"],
       default: "user",
@@ -44,25 +40,15 @@ const UserSchema = new Schema(
   { timestamps: true }
 );
 
+// Keep image and imageUrl in sync
 UserSchema.pre("validate", function () {
-  const doc = this as unknown as {
-    image?: string;
-    imageUrl?: string;
-    role?: "user" | "platformAdmin";
-    platformRole?: "user" | "platformAdmin";
-  };
+  const doc = this as unknown as { image?: string; imageUrl?: string };
 
   const img = (doc.image ?? "").trim();
   const imgUrl = (doc.imageUrl ?? "").trim();
 
   if (!img && imgUrl) doc.image = imgUrl;
   if (!imgUrl && img) doc.imageUrl = img;
-
-  const pr = (doc.platformRole ?? "").trim() as "user" | "platformAdmin" | "";
-  const r = (doc.role ?? "").trim() as "user" | "platformAdmin" | "";
-
-  if (!pr && r) doc.platformRole = r;
-  if (pr && (!r || r !== pr)) doc.role = pr;
 });
 
 export type UserDoc = InferSchemaType<typeof UserSchema> & mongoose.Document;

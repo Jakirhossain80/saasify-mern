@@ -1,7 +1,7 @@
 // FILE: server/src/models/Membership.ts
 import mongoose, { Schema, type InferSchemaType, type Model } from "mongoose";
 
-export type MembershipRole = "platform_admin" | "tenant_admin" | "member";
+export type MembershipRole = "platformAdmin" | "tenantAdmin" | "member";
 
 const MembershipSchema = new Schema(
   {
@@ -9,7 +9,7 @@ const MembershipSchema = new Schema(
     tenantId: { type: Schema.Types.ObjectId, ref: "Tenant", required: true, index: true },
     role: {
       type: String,
-      enum: ["platform_admin", "tenant_admin", "member"],
+      enum: ["platformAdmin", "tenantAdmin", "member"],
       required: true,
       index: true,
     },

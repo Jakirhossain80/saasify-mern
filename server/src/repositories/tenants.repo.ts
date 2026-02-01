@@ -8,6 +8,7 @@ export type ListTenantsRepoOptions = {
   offset?: number;
   includeArchived?: boolean;
   includeDeleted?: boolean;
+  q?: string; // ✅ add: simple search by name/slug
 };
 
 export async function listTenantsRepo(options: ListTenantsRepoOptions = {}): Promise<TenantDoc[]> {
@@ -20,6 +21,13 @@ export async function listTenantsRepo(options: ListTenantsRepoOptions = {}): Pro
 
   if (!options.includeArchived) filter.isArchived = false;
   if (!options.includeDeleted) filter.deletedAt = null;
+
+  const q = (options.q ?? "").trim();
+  if (q) {
+    // ✅ basic search: name or slug contains q (case-insensitive)
+    const rx = new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "i");
+    filter.$or = [{ name: rx }, { slug: rx }];
+  }
 
   return Tenant.find(filter).sort({ createdAt: -1 }).skip(offset).limit(limit).exec();
 }
