@@ -8,6 +8,7 @@ export const API = {
     me: "/auth/me",
   },
   platform: {
+    // base route (pass pagination/search via axios `params`)
     tenants: "/platform/tenants",
   },
   tenant: {
