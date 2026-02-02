@@ -67,10 +67,7 @@ export default function PlatformDashboard() {
   const tenants = tenantsQuery.data ?? [];
   const err = tenantsQuery.error as any;
 
-  const errorMessage =
-    err?.response?.data?.message ||
-    err?.message ||
-    "Failed to load tenants";
+  const errorMessage = err?.response?.data?.message || err?.message || "Failed to load tenants";
 
   // ✅ Mutation: create tenant
   const createTenant = useMutation({
@@ -99,14 +96,55 @@ export default function PlatformDashboard() {
     },
   });
 
+  // ✅ Feature #2: Archive / Unarchive / Delete
+  const archiveTenant = useMutation({
+    mutationFn: async (tenantId: string) => {
+      const { data } = await http.patch(API.platform.archiveTenant(tenantId), {});
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Tenant archived");
+      qc.invalidateQueries({ queryKey: ["platformTenants"] });
+    },
+    onError: (e: any) => {
+      toast.error(e?.response?.data?.message || "Failed to archive tenant");
+    },
+  });
+
+  const unarchiveTenant = useMutation({
+    mutationFn: async (tenantId: string) => {
+      const { data } = await http.patch(API.platform.unarchiveTenant(tenantId), {});
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Tenant unarchived");
+      qc.invalidateQueries({ queryKey: ["platformTenants"] });
+    },
+    onError: (e: any) => {
+      toast.error(e?.response?.data?.message || "Failed to unarchive tenant");
+    },
+  });
+
+  const deleteTenant = useMutation({
+    mutationFn: async (tenantId: string) => {
+      const { data } = await http.delete(API.platform.deleteTenant(tenantId));
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Tenant deleted");
+      qc.invalidateQueries({ queryKey: ["platformTenants"] });
+    },
+    onError: (e: any) => {
+      toast.error(e?.response?.data?.message || "Failed to delete tenant");
+    },
+  });
+
   return (
     <div className="space-y-6">
       {/* Header */}
       <div>
         <h1 className="text-2xl font-semibold">Platform Dashboard</h1>
-        <p className="text-sm text-slate-600">
-          Platform admin only — manage tenants.
-        </p>
+        <p className="text-sm text-slate-600">Platform admin only — manage tenants.</p>
       </div>
 
       {/* Controls: search + includeArchived */}
@@ -158,9 +196,7 @@ export default function PlatformDashboard() {
       <section className="space-y-3">
         <div>
           <h2 className="text-lg font-semibold">Create Tenant</h2>
-          <p className="text-sm text-slate-600">
-            Name + slug (URL-friendly). Logo URL optional.
-          </p>
+          <p className="text-sm text-slate-600">Name + slug (URL-friendly). Logo URL optional.</p>
         </div>
 
         <form
@@ -266,26 +302,20 @@ export default function PlatformDashboard() {
 
         {/* Loading */}
         {tenantsQuery.isLoading && (
-          <div className="border rounded-lg p-4 text-sm text-slate-600">
-            Loading…
-          </div>
+          <div className="border rounded-lg p-4 text-sm text-slate-600">Loading…</div>
         )}
 
         {/* Error */}
         {tenantsQuery.isError && (
           <div className="border rounded-lg p-4 space-y-2">
-            <p className="text-sm font-medium text-rose-600">
-              Failed to load tenants.
-            </p>
+            <p className="text-sm font-medium text-rose-600">Failed to load tenants.</p>
             <p className="text-sm text-slate-700">{errorMessage}</p>
           </div>
         )}
 
         {/* Empty */}
         {tenantsQuery.isSuccess && tenants.length === 0 && (
-          <div className="border rounded-lg p-4 text-sm text-slate-600">
-            No tenants found
-          </div>
+          <div className="border rounded-lg p-4 text-sm text-slate-600">No tenants found</div>
         )}
 
         {/* Table */}
@@ -297,22 +327,79 @@ export default function PlatformDashboard() {
                   <th className="p-3 border-b">Name</th>
                   <th className="p-3 border-b">Slug</th>
                   <th className="p-3 border-b">Open</th>
+                  <th className="p-3 border-b">Actions</th>
                 </tr>
               </thead>
+
               <tbody>
                 {tenants.map((t) => (
                   <tr key={t.id} className="hover:bg-slate-50">
-                    <td className="p-3 border-b">{t.name}</td>
+                    <td className="p-3 border-b">
+                      <div className="flex items-center gap-2">
+                        <span className="font-medium">{t.name}</span>
+                        {t.isArchived ? (
+                          <span className="text-[11px] px-2 py-0.5 rounded border bg-slate-50 text-slate-600">
+                            Archived
+                          </span>
+                        ) : null}
+                      </div>
+                    </td>
+
                     <td className="p-3 border-b text-slate-600">{t.slug}</td>
+
                     <td className="p-3 border-b">
                       <a className="underline" href={`/t/${t.slug}`}>
                         Go to tenant
                       </a>
                     </td>
+
+                    <td className="p-3 border-b">
+                      <div className="flex items-center gap-2">
+                        {!t.isArchived ? (
+                          <button
+                            type="button"
+                            className="border rounded px-2 py-1 text-xs hover:bg-slate-50 disabled:opacity-60"
+                            onClick={() => archiveTenant.mutate(t.id)}
+                            disabled={archiveTenant.isPending}
+                          >
+                            Archive
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            className="border rounded px-2 py-1 text-xs hover:bg-slate-50 disabled:opacity-60"
+                            onClick={() => unarchiveTenant.mutate(t.id)}
+                            disabled={unarchiveTenant.isPending}
+                          >
+                            Unarchive
+                          </button>
+                        )}
+
+                        <button
+                          type="button"
+                          className="border border-rose-300 text-rose-700 rounded px-2 py-1 text-xs hover:bg-rose-50 disabled:opacity-60"
+                          onClick={() => {
+                            const ok = window.confirm(
+                              "Delete tenant? This is permanent (safe delete may block)."
+                            );
+                            if (ok) deleteTenant.mutate(t.id);
+                          }}
+                          disabled={deleteTenant.isPending}
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </td>
                   </tr>
                 ))}
               </tbody>
             </table>
+
+            {/* Small note helps beginners understand what "Delete" can do */}
+            <div className="border-t p-3 text-xs text-slate-600">
+              Note: Delete uses “safe delete”. If the tenant has projects/memberships, the API may block deletion.
+              Archive is recommended.
+            </div>
           </div>
         )}
       </section>
