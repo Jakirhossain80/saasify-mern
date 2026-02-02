@@ -1,6 +1,12 @@
 // FILE: server/src/models/Tenant.ts
 import mongoose, { Schema, type InferSchemaType, type Model } from "mongoose";
 
+/**
+ * Tenant model
+ * - slug is canonical identity for routing: /t/:tenantSlug
+ * - isArchived=true means tenant inactive (soft disable)
+ * - deletedAt != null means soft-deleted (hidden by default)
+ */
 const TenantSchema = new Schema(
   {
     name: { type: String, required: true, trim: true },
@@ -15,9 +21,12 @@ const TenantSchema = new Schema(
 
     logoUrl: { type: String, default: "", trim: true },
 
-    isArchived: { type: Boolean, default: false },
+    // ✅ Archive support
+    isArchived: { type: Boolean, default: false, index: true },
+    archivedAt: { type: Date, default: null },
+    archivedByUserId: { type: Schema.Types.ObjectId, ref: "User", default: null },
 
-    // ✅ Soft delete support (needed by your repo/service)
+    // ✅ Soft delete support (already used by repo/service)
     deletedAt: { type: Date, default: null, index: true },
     deletedByUserId: { type: Schema.Types.ObjectId, ref: "User", default: null },
   },
@@ -25,8 +34,7 @@ const TenantSchema = new Schema(
 );
 
 TenantSchema.index({ slug: 1 }, { unique: true });
-TenantSchema.index({ isArchived: 1 });
-TenantSchema.index({ deletedAt: 1 });
+// (isArchived, deletedAt already indexed via index:true above; keeping extra indexes is optional)
 
 TenantSchema.pre("validate", function () {
   const doc = this as unknown as { slug?: string };

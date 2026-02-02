@@ -13,6 +13,10 @@ import {
   listTenants,
   setTenantSuspended,
   softDeleteTenant,
+
+  // ✅ Feature #2 service functions
+  setTenantArchived,
+  safeDeleteTenant,
 } from "../services/tenants.service";
 
 function toTenantResponse(t: any) {
@@ -111,9 +115,6 @@ export async function listAllTenantsHandler(req: Request, res: Response, next: N
   }
 }
 
-// getTenantDetailsHandler, setTenantSuspendedHandler, softDeleteTenantHandler unchanged...
-
-
 /**
  * Platform Admin only
  * GET /api/platform/tenants/:tenantId
@@ -147,7 +148,7 @@ export async function getTenantDetailsHandler(req: Request, res: Response, next:
  * PATCH /api/platform/tenants/:tenantId/suspend
  * Body: { suspended: boolean }
  *
- * Note: suspension maps to Tenant.isArchived
+ * Note: suspension maps to Tenant.isArchived (legacy naming)
  */
 export async function setTenantSuspendedHandler(req: Request, res: Response, next: NextFunction) {
   try {
@@ -169,11 +170,18 @@ export async function setTenantSuspendedHandler(req: Request, res: Response, nex
       });
     }
 
+    const actorUserId = req.user?.userId;
+    const actorObjId =
+      actorUserId && mongoose.isValidObjectId(String(actorUserId))
+        ? (new mongoose.Types.ObjectId(String(actorUserId)) as Types.ObjectId)
+        : null;
+
     const tenantId = new mongoose.Types.ObjectId(parsedParams.data.tenantId) as Types.ObjectId;
 
     const updated = await setTenantSuspended({
       tenantId,
       suspended: parsedBody.data.suspended,
+      actorUserId: actorObjId,
     });
 
     if (!updated) {
@@ -202,7 +210,7 @@ export async function softDeleteTenantHandler(req: Request, res: Response, next:
       });
     }
 
-    // ✅ FIX: requireAuth sets req.user.userId (NOT req.user._id)
+    // ✅ requireAuth sets req.user.userId
     const actorUserId = req.user?.userId;
     if (!actorUserId || !mongoose.isValidObjectId(String(actorUserId))) {
       return res.status(401).json({ code: "UNAUTHORIZED", message: "Unauthorized" });
@@ -218,6 +226,147 @@ export async function softDeleteTenantHandler(req: Request, res: Response, next:
     }
 
     return res.status(200).json({ item: toTenantResponse(updated) });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+/* =========================================================
+   ✅ Feature #2: Archive / Unarchive / Safe Delete (Hard)
+   ========================================================= */
+
+/**
+ * Platform Admin only
+ * PATCH /api/platform/tenants/:tenantId/archive
+ */
+export async function archiveTenantHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const parsedParams = PlatformTenantIdParamSchema.safeParse(req.params);
+    if (!parsedParams.success) {
+      return res.status(400).json({
+        code: "VALIDATION_ERROR",
+        message: "Invalid tenantId",
+        fieldErrors: parsedParams.error.flatten().fieldErrors,
+      });
+    }
+
+    const actorUserId = req.user?.userId;
+    if (!actorUserId || !mongoose.isValidObjectId(String(actorUserId))) {
+      return res.status(401).json({ code: "UNAUTHORIZED", message: "Unauthorized" });
+    }
+
+    const tenantId = new mongoose.Types.ObjectId(parsedParams.data.tenantId) as Types.ObjectId;
+
+    const updated = await setTenantArchived({
+      tenantId,
+      isArchived: true,
+      actorUserId: new mongoose.Types.ObjectId(String(actorUserId)) as Types.ObjectId,
+    });
+
+    if (!updated) {
+      return res.status(404).json({ code: "NOT_FOUND", message: "Tenant not found" });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      tenantId: String(updated._id),
+      isArchived: true,
+    });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+/**
+ * Platform Admin only
+ * PATCH /api/platform/tenants/:tenantId/unarchive
+ */
+export async function unarchiveTenantHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const parsedParams = PlatformTenantIdParamSchema.safeParse(req.params);
+    if (!parsedParams.success) {
+      return res.status(400).json({
+        code: "VALIDATION_ERROR",
+        message: "Invalid tenantId",
+        fieldErrors: parsedParams.error.flatten().fieldErrors,
+      });
+    }
+
+    const actorUserId = req.user?.userId;
+    if (!actorUserId || !mongoose.isValidObjectId(String(actorUserId))) {
+      return res.status(401).json({ code: "UNAUTHORIZED", message: "Unauthorized" });
+    }
+
+    const tenantId = new mongoose.Types.ObjectId(parsedParams.data.tenantId) as Types.ObjectId;
+
+    const updated = await setTenantArchived({
+      tenantId,
+      isArchived: false,
+      actorUserId: new mongoose.Types.ObjectId(String(actorUserId)) as Types.ObjectId,
+    });
+
+    if (!updated) {
+      return res.status(404).json({ code: "NOT_FOUND", message: "Tenant not found" });
+    }
+
+    return res.status(200).json({
+      ok: true,
+      tenantId: String(updated._id),
+      isArchived: false,
+    });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+/**
+ * Platform Admin only
+ * DELETE /api/platform/tenants/:tenantId/hard
+ * Safe hard delete: only if no projects and no memberships
+ */
+export async function safeDeleteTenantHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const parsedParams = PlatformTenantIdParamSchema.safeParse(req.params);
+    if (!parsedParams.success) {
+      return res.status(400).json({
+        code: "VALIDATION_ERROR",
+        message: "Invalid tenantId",
+        fieldErrors: parsedParams.error.flatten().fieldErrors,
+      });
+    }
+
+    const actorUserId = req.user?.userId;
+    if (!actorUserId || !mongoose.isValidObjectId(String(actorUserId))) {
+      return res.status(401).json({ code: "UNAUTHORIZED", message: "Unauthorized" });
+    }
+
+    const tenantId = new mongoose.Types.ObjectId(parsedParams.data.tenantId) as Types.ObjectId;
+
+    const result = await safeDeleteTenant({
+      tenantId,
+      actorUserId: new mongoose.Types.ObjectId(String(actorUserId)) as Types.ObjectId,
+    });
+
+    if (!result) {
+      return res.status(404).json({ code: "NOT_FOUND", message: "Tenant not found" });
+    }
+
+    if (!result.ok) {
+      const message =
+        result.reason === "HAS_PROJECTS"
+          ? "Cannot delete tenant: tenant has projects"
+          : result.reason === "HAS_MEMBERSHIPS"
+          ? "Cannot delete tenant: tenant has memberships"
+          : "Cannot delete tenant: missing dependencies (Project/Membership models not wired)";
+
+      return res.status(409).json({
+        code: "DELETE_NOT_ALLOWED",
+        message,
+        reason: result.reason,
+      });
+    }
+
+    return res.status(200).json({ ok: true, tenantId: String(tenantId) });
   } catch (err) {
     return next(err);
   }

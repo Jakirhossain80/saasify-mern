@@ -8,8 +8,15 @@ import {
   createTenantHandler,
   getTenantDetailsHandler,
   listAllTenantsHandler,
+
+  // existing
   setTenantSuspendedHandler,
   softDeleteTenantHandler,
+
+  // ✅ Feature #2 (new)
+  archiveTenantHandler,
+  unarchiveTenantHandler,
+  safeDeleteTenantHandler,
 } from "../controllers/tenants.controller";
 
 const router = Router();
@@ -31,16 +38,39 @@ router.use("/platform", requireAuth, requirePlatformAdmin);
 // ✅ Create tenant
 router.post("/platform/tenants", createTenantHandler);
 
-// List tenants
+// ✅ List tenants
 router.get("/platform/tenants", listAllTenantsHandler);
 
-// Tenant details
+// ✅ Tenant details
 router.get("/platform/tenants/:tenantId", getTenantDetailsHandler);
 
-// Suspend/unsuspend (maps to isArchived)
+/**
+ * =========================
+ * Legacy / Backward-compatible
+ * =========================
+ * Suspend/unsuspend (maps to isArchived)
+ * Keep this if your UI or old Postman collections still use it.
+ */
 router.patch("/platform/tenants/:tenantId/suspend", setTenantSuspendedHandler);
 
-// Soft delete
-router.delete("/platform/tenants/:tenantId", softDeleteTenantHandler);
+/**
+ * Soft delete (sets deletedAt + deletedByUserId + archives tenant)
+ * Keep this if your project already uses soft delete flow.
+ */
+router.delete("/platform/tenants/:tenantId/soft", softDeleteTenantHandler);
+
+/**
+ * =========================
+ * ✅ Feature #2: Archive / Unarchive
+ * =========================
+ */
+router.patch("/platform/tenants/:tenantId/archive", archiveTenantHandler);
+router.patch("/platform/tenants/:tenantId/unarchive", unarchiveTenantHandler);
+
+/**
+ * ✅ Feature #2: Safe delete (hard delete only if no projects/memberships)
+ * This is the recommended DELETE behavior.
+ */
+router.delete("/platform/tenants/:tenantId", safeDeleteTenantHandler);
 
 export default router;
