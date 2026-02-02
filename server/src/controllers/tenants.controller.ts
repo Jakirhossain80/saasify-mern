@@ -22,31 +22,21 @@ function toTenantResponse(t: any) {
     slug: t.slug,
     logoUrl: t.logoUrl ?? "",
     isArchived: Boolean(t.isArchived),
-    // keep compatible even if field doesn't exist in schema:
     deletedAt: t.deletedAt ?? null,
     createdAt: t.createdAt,
     updatedAt: t.updatedAt,
   };
 }
 
-// Helper: detect Mongo duplicate key for slug
 function isDuplicateSlugError(err: any): boolean {
   if (!err) return false;
-  // Mongo duplicate key error
   if (err.code === 11000) {
-    // If keyPattern exists, prefer it
     if (err.keyPattern?.slug) return true;
-    // Fallback: parse keyValue
     if (err.keyValue?.slug) return true;
   }
   return false;
 }
 
-/**
- * Platform Admin only
- * POST /api/platform/tenants
- * Body: { name, slug, logoUrl? }
- */
 export async function createTenantHandler(req: Request, res: Response, next: NextFunction) {
   try {
     const parsedBody = PlatformCreateTenantBodySchema.safeParse(req.body);
@@ -58,7 +48,6 @@ export async function createTenantHandler(req: Request, res: Response, next: Nex
       });
     }
 
-    // actorId comes from requireAuth -> req.user = { userId, email }
     const actorUserId = req.user?.userId;
     if (!actorUserId || !mongoose.isValidObjectId(String(actorUserId))) {
       return res.status(401).json({ code: "UNAUTHORIZED", message: "Unauthorized" });
@@ -73,7 +62,7 @@ export async function createTenantHandler(req: Request, res: Response, next: Nex
 
     return res.status(201).json({ tenant: toTenantResponse(created) });
   } catch (err: any) {
-    if (isDuplicateSlugError(err)) {
+    if (isDuplicateSlugError(err) || err?.message === "SLUG_TAKEN") {
       return res.status(409).json({ code: "SLUG_TAKEN", message: "Tenant slug already exists" });
     }
     return next(err);
@@ -83,6 +72,7 @@ export async function createTenantHandler(req: Request, res: Response, next: Nex
 /**
  * Platform Admin only
  * GET /api/platform/tenants
+ * Supports: ?page=1&q=test&includeArchived=false&limit=20
  */
 export async function listAllTenantsHandler(req: Request, res: Response, next: NextFunction) {
   try {
@@ -95,18 +85,34 @@ export async function listAllTenantsHandler(req: Request, res: Response, next: N
       });
     }
 
+    const limit = parsed.data.limit ?? 20;
+
+    // ✅ If page is used, compute offset from it (React Query plan)
+    const offset =
+      typeof parsed.data.page === "number"
+        ? (parsed.data.page - 1) * limit
+        : (parsed.data.offset ?? 0);
+
     const items = await listTenants({
-      limit: parsed.data.limit,
-      offset: parsed.data.offset,
+      limit,
+      offset,
+      q: parsed.data.q,
       includeArchived: parsed.data.includeArchived ?? false,
       includeDeleted: parsed.data.includeDeleted ?? false,
     });
 
-    return res.status(200).json({ items: items.map(toTenantResponse) });
+    return res.status(200).json({
+      items: items.map(toTenantResponse),
+      page: parsed.data.page ?? undefined,
+      limit,
+    });
   } catch (err) {
     return next(err);
   }
 }
+
+// getTenantDetailsHandler, setTenantSuspendedHandler, softDeleteTenantHandler unchanged...
+
 
 /**
  * Platform Admin only

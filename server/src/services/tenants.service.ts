@@ -17,11 +17,6 @@ function normalizeSlug(slug: string) {
 
 /**
  * Platform-level: create tenant
- * - Normalizes slug
- * - Checks duplicate slug
- * - Creates tenant
- * - Writes audit log: TENANT_CREATED
- * - Throws: SLUG_TAKEN
  */
 export async function createTenant(input: {
   name: string;
@@ -32,7 +27,6 @@ export async function createTenant(input: {
   const name = input.name.trim();
   const slug = normalizeSlug(input.slug);
 
-  // ✅ explicit duplicate check (clean UX + clean API error)
   const existing = await findTenantBySlugRepo(slug);
   if (existing) throw new Error("SLUG_TAKEN");
 
@@ -43,19 +37,18 @@ export async function createTenant(input: {
       logoUrl: input.logoUrl ?? "",
     });
 
-    // ✅ audit log (best effort, but now real)
-    // If AuditLog schema differs, this write may omit fields (strict mode).
-    // Share models/AuditLog.ts if you want 100% aligned payload.
+    // ✅ AuditLog schema-aligned
     await createAuditLog({
-      action: "TENANT_CREATED",
+      scope: "platform",
+      action: "tenant.created",
+      entity: { type: "Tenant", id: created._id },
       actorUserId: input.createdByUserId,
-      tenantId: created._id,
+      tenantId: null, // platform scope event
       meta: { name: created.name, slug: created.slug },
     });
 
     return created;
   } catch (err: any) {
-    // backup safety: if a race condition happens and unique index triggers
     if (err?.code === 11000) throw new Error("SLUG_TAKEN");
     throw err;
   }
@@ -63,7 +56,6 @@ export async function createTenant(input: {
 
 /**
  * Platform-level: list tenants
- * Default excludes archived + deleted unless explicitly included.
  */
 export async function listTenants(input: {
   limit?: number;
@@ -82,37 +74,64 @@ export async function listTenants(input: {
 }
 
 /**
- * Platform-level: get tenant details
- * Excludes soft-deleted tenants.
+ * Used by: GET /api/platform/tenants/:tenantId
  */
 export async function getTenantById(tenantId: Types.ObjectId): Promise<TenantDoc | null> {
   return getTenantByIdRepo(tenantId);
 }
 
 /**
- * Platform-level: suspend/unsuspend tenant
- * Suspension maps to isArchived to keep Phase-4 resolveTenant behavior consistent.
+ * ✅ FIX: Used by PATCH /api/platform/tenants/:tenantId/suspend
+ * Suspension maps to isArchived via repo.
  */
 export async function setTenantSuspended(input: {
   tenantId: Types.ObjectId;
   suspended: boolean;
 }): Promise<TenantDoc | null> {
-  return setTenantSuspendedRepo({
+  const updated = await setTenantSuspendedRepo({
     tenantId: input.tenantId,
     suspended: input.suspended,
   });
+
+  // Optional audit (safe + useful)
+  if (updated) {
+    await createAuditLog({
+      scope: "platform",
+      action: "tenant.status_changed",
+      entity: { type: "Tenant", id: updated._id },
+      actorUserId: null, // controller doesn't pass actor; keep null
+      tenantId: null,
+      meta: { suspended: Boolean(input.suspended), slug: updated.slug, name: updated.name },
+    });
+  }
+
+  return updated;
 }
 
 /**
- * Platform-level: soft delete tenant
- * Sets deletedAt + deletedByUserId and archives tenant.
+ * ✅ (Prevents next likely crash)
+ * Used by DELETE /api/platform/tenants/:tenantId
  */
 export async function softDeleteTenant(input: {
   tenantId: Types.ObjectId;
   deletedByUserId: Types.ObjectId;
 }): Promise<TenantDoc | null> {
-  return softDeleteTenantRepo({
+  const updated = await softDeleteTenantRepo({
     tenantId: input.tenantId,
     deletedByUserId: input.deletedByUserId,
   });
+
+  // Optional audit
+  if (updated) {
+    await createAuditLog({
+      scope: "platform",
+      action: "tenant.status_changed",
+      entity: { type: "Tenant", id: updated._id },
+      actorUserId: input.deletedByUserId,
+      tenantId: null,
+      meta: { deletedAt: updated.deletedAt ?? null, slug: updated.slug, name: updated.name },
+    });
+  }
+
+  return updated;
 }
