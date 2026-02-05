@@ -22,6 +22,25 @@ type TenantsResponse = {
   limit?: number;
 };
 
+type AssignAdminPayload = { email: string };
+type AssignAdminResponse = {
+  membership: {
+    id: string;
+    tenantId: string;
+    userId: string;
+    role: "tenantAdmin" | "member";
+    status: "active" | "removed";
+  };
+};
+
+// ✅ Feature #4 response type
+type PlatformAnalyticsResponse = {
+  totalTenants: number;
+  activeTenants: number;
+  totalProjects: number;
+  chartData: Array<{ name: string; value: number }>;
+};
+
 function normalizeSlug(input: string) {
   return input
     .trim()
@@ -47,7 +66,36 @@ export default function PlatformDashboard() {
 
   const slugPreview = useMemo(() => normalizeSlug(slug || name), [slug, name]);
 
-  // ✅ Query (exact plan)
+  // ✅ Feature #3 (UI state): Assign Tenant Admin modal
+  const [isAssignOpen, setIsAssignOpen] = useState(false);
+  const [selectedTenantId, setSelectedTenantId] = useState<string | null>(null);
+  const [adminEmail, setAdminEmail] = useState("");
+
+  function openAssignAdminModal(tenantId: string) {
+    setSelectedTenantId(tenantId);
+    setAdminEmail("");
+    setIsAssignOpen(true);
+  }
+
+  function closeAssignAdminModal() {
+    setIsAssignOpen(false);
+    setSelectedTenantId(null);
+    setAdminEmail("");
+  }
+
+  // ✅ Feature #4: Platform Analytics query
+  const analyticsQuery = useQuery({
+    queryKey: ["platformAnalytics"],
+    queryFn: async () => {
+      const { data } = await http.get<PlatformAnalyticsResponse>(API.platform.analytics);
+      return data;
+    },
+    // optional
+    // refetchInterval: 30000,
+    staleTime: 0,
+  });
+
+  // ✅ Tenants query (exact plan)
   const tenantsQuery = useQuery({
     queryKey: ["platformTenants", page, q, includeArchived],
     queryFn: async () => {
@@ -66,7 +114,6 @@ export default function PlatformDashboard() {
 
   const tenants = tenantsQuery.data ?? [];
   const err = tenantsQuery.error as any;
-
   const errorMessage = err?.response?.data?.message || err?.message || "Failed to load tenants";
 
   // ✅ Mutation: create tenant
@@ -83,6 +130,8 @@ export default function PlatformDashboard() {
 
       // ✅ IMPORTANT: refresh the tenants list cache
       qc.invalidateQueries({ queryKey: ["platformTenants"] });
+      // ✅ Feature #4: refresh analytics too
+      qc.invalidateQueries({ queryKey: ["platformAnalytics"] });
     },
     onError: (e: any) => {
       const code = e?.response?.data?.code;
@@ -105,6 +154,7 @@ export default function PlatformDashboard() {
     onSuccess: () => {
       toast.success("Tenant archived");
       qc.invalidateQueries({ queryKey: ["platformTenants"] });
+      qc.invalidateQueries({ queryKey: ["platformAnalytics"] });
     },
     onError: (e: any) => {
       toast.error(e?.response?.data?.message || "Failed to archive tenant");
@@ -119,6 +169,7 @@ export default function PlatformDashboard() {
     onSuccess: () => {
       toast.success("Tenant unarchived");
       qc.invalidateQueries({ queryKey: ["platformTenants"] });
+      qc.invalidateQueries({ queryKey: ["platformAnalytics"] });
     },
     onError: (e: any) => {
       toast.error(e?.response?.data?.message || "Failed to unarchive tenant");
@@ -133,11 +184,46 @@ export default function PlatformDashboard() {
     onSuccess: () => {
       toast.success("Tenant deleted");
       qc.invalidateQueries({ queryKey: ["platformTenants"] });
+      qc.invalidateQueries({ queryKey: ["platformAnalytics"] });
     },
     onError: (e: any) => {
       toast.error(e?.response?.data?.message || "Failed to delete tenant");
     },
   });
+
+  // ✅ Feature #3: Assign Tenant Admin (POST /platform/tenants/:tenantId/admins)
+  const assignTenantAdmin = useMutation({
+    mutationFn: async (input: { tenantId: string; email: string }) => {
+      const payload: AssignAdminPayload = { email: input.email.trim().toLowerCase() };
+      const { data } = await http.post<AssignAdminResponse>(
+        API.platform.assignTenantAdmin(input.tenantId),
+        payload
+      );
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Tenant Admin assigned");
+
+      // Optional query invalidations (if you later add members list in platform UI)
+      if (selectedTenantId) {
+        qc.invalidateQueries({ queryKey: ["tenantMembers", selectedTenantId] });
+      }
+
+      // Refresh tenants list (safe)
+      qc.invalidateQueries({ queryKey: ["platformTenants"] });
+
+      // Optional: refresh analytics
+      qc.invalidateQueries({ queryKey: ["platformAnalytics"] });
+
+      closeAssignAdminModal();
+    },
+    onError: (e: any) => {
+      const msg = e?.response?.data?.message || e?.message || "Failed to assign tenant admin";
+      toast.error(msg);
+    },
+  });
+
+  const analytics = analyticsQuery.data;
 
   return (
     <div className="space-y-6">
@@ -146,6 +232,64 @@ export default function PlatformDashboard() {
         <h1 className="text-2xl font-semibold">Platform Dashboard</h1>
         <p className="text-sm text-slate-600">Platform admin only — manage tenants.</p>
       </div>
+
+      {/* ✅ Feature #4: Analytics Section */}
+      <section className="space-y-3">
+        <div>
+          <h2 className="text-lg font-semibold">Analytics</h2>
+          <p className="text-sm text-slate-600">Quick overview of platform usage.</p>
+        </div>
+
+        {analyticsQuery.isLoading && (
+          <div className="border rounded-lg p-4 text-sm text-slate-600">Loading analytics…</div>
+        )}
+
+        {analyticsQuery.isError && (
+          <div className="border rounded-lg p-4 space-y-1">
+            <p className="text-sm font-medium text-rose-600">Failed to load analytics.</p>
+            <p className="text-sm text-slate-700">
+              {(analyticsQuery.error as any)?.response?.data?.message ||
+                (analyticsQuery.error as any)?.message ||
+                "Unknown error"}
+            </p>
+          </div>
+        )}
+
+        {analyticsQuery.isSuccess && analytics && (
+          <div className="space-y-3">
+            {/* Summary cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <div className="border rounded-lg p-4">
+                <p className="text-xs text-slate-500">Total Tenants</p>
+                <p className="text-2xl font-semibold">{analytics.totalTenants}</p>
+              </div>
+
+              <div className="border rounded-lg p-4">
+                <p className="text-xs text-slate-500">Active Tenants</p>
+                <p className="text-2xl font-semibold">{analytics.activeTenants}</p>
+              </div>
+
+              <div className="border rounded-lg p-4">
+                <p className="text-xs text-slate-500">Total Projects</p>
+                <p className="text-2xl font-semibold">{analytics.totalProjects}</p>
+              </div>
+            </div>
+
+            {/* Simple “chart” (list version) */}
+            <div className="border rounded-lg p-4">
+              <p className="text-sm font-medium">Chart Data</p>
+              <div className="mt-2 space-y-2">
+                {(analytics.chartData ?? []).map((item) => (
+                  <div key={item.name} className="flex items-center justify-between text-sm">
+                    <span className="text-slate-700">{item.name}</span>
+                    <span className="font-mono">{item.value}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+      </section>
 
       {/* Controls: search + includeArchived */}
       <div className="border rounded-lg p-4 space-y-3">
@@ -182,7 +326,10 @@ export default function PlatformDashboard() {
 
           <div className="flex items-end justify-end gap-2">
             <button
-              onClick={() => tenantsQuery.refetch()}
+              onClick={() => {
+                tenantsQuery.refetch();
+                analyticsQuery.refetch();
+              }}
               className="border rounded px-3 py-2 text-sm hover:bg-slate-50"
               type="button"
             >
@@ -354,7 +501,17 @@ export default function PlatformDashboard() {
                     </td>
 
                     <td className="p-3 border-b">
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        {/* ✅ Feature #3: Assign Admin */}
+                        <button
+                          type="button"
+                          className="border rounded px-2 py-1 text-xs hover:bg-slate-50 disabled:opacity-60"
+                          onClick={() => openAssignAdminModal(t.id)}
+                          disabled={assignTenantAdmin.isPending}
+                        >
+                          Assign Admin
+                        </button>
+
                         {!t.isArchived ? (
                           <button
                             type="button"
@@ -397,12 +554,76 @@ export default function PlatformDashboard() {
 
             {/* Small note helps beginners understand what "Delete" can do */}
             <div className="border-t p-3 text-xs text-slate-600">
-              Note: Delete uses “safe delete”. If the tenant has projects/memberships, the API may block deletion.
-              Archive is recommended.
+              Note: Delete uses “safe delete”. If the tenant has projects/memberships, the API may
+              block deletion. Archive is recommended.
             </div>
           </div>
         )}
       </section>
+
+      {/* ✅ Feature #3: Assign Admin Modal */}
+      {isAssignOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
+          <div className="w-full max-w-md rounded-lg bg-white p-4">
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <h2 className="text-lg font-semibold">Assign Tenant Admin</h2>
+                <p className="text-sm text-slate-600">
+                  Enter a user email. Membership will be upserted as{" "}
+                  <span className="font-mono">tenantAdmin</span> +{" "}
+                  <span className="font-mono">active</span>.
+                </p>
+              </div>
+
+              <button
+                type="button"
+                className="border rounded px-2 py-1 text-xs hover:bg-slate-50"
+                onClick={closeAssignAdminModal}
+                disabled={assignTenantAdmin.isPending}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div className="mt-4 space-y-2">
+              <label className="text-sm">Admin Email</label>
+              <input
+                className="w-full border rounded px-3 py-2 text-sm"
+                value={adminEmail}
+                onChange={(e) => setAdminEmail(e.target.value)}
+                placeholder="admin@tenant.com"
+                autoFocus
+              />
+            </div>
+
+            <div className="mt-4 flex items-center justify-end gap-2">
+              <button
+                type="button"
+                className="border rounded px-3 py-2 text-sm hover:bg-slate-50 disabled:opacity-60"
+                onClick={closeAssignAdminModal}
+                disabled={assignTenantAdmin.isPending}
+              >
+                Cancel
+              </button>
+
+              <button
+                type="button"
+                className="rounded bg-black px-3 py-2 text-sm text-white disabled:opacity-60"
+                disabled={assignTenantAdmin.isPending || !selectedTenantId || !adminEmail.trim()}
+                onClick={() => {
+                  if (!selectedTenantId) return;
+                  assignTenantAdmin.mutate({
+                    tenantId: selectedTenantId,
+                    email: adminEmail,
+                  });
+                }}
+              >
+                {assignTenantAdmin.isPending ? "Assigning..." : "Assign Admin"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

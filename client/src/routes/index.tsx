@@ -9,18 +9,26 @@ import TenantLayout from "../layouts/TenantLayout";
 
 import Landing from "../pages/public/Landing";
 import Docs from "../pages/public/Docs";
+import Security from "../pages/public/Security";
+import Pricing from "../pages/public/Pricing";
+import Contact from "../pages/public/Contact";
+
 import SignIn from "../pages/auth/SignIn";
 import SignUp from "../pages/auth/SignUp";
+
 import PlatformDashboard from "../pages/platform/PlatformDashboard";
+import AuditLogs from "../pages/platform/AuditLogs"; // ✅ Feature #5
+
 import TenantDashboard from "../pages/tenant/TenantDashboard";
 import ProjectsList from "../pages/tenant/ProjectsList";
+
+// ✅ Add SelectTenant route/page
+import SelectTenant from "../pages/tenant/SelectTenant";
+
 import NotFound from "../pages/NotFound";
 
 import ProtectedRoute from "../components/guards/ProtectedRoute";
 import RoleGate from "../components/guards/RoleGate";
-import Security from "../pages/public/Security";
-import Pricing from "../pages/public/Pricing";
-import Contact from "../pages/public/Contact";
 
 export const router = createBrowserRouter([
   {
@@ -49,6 +57,16 @@ export const router = createBrowserRouter([
         ],
       },
 
+      // ✅ Select tenant (Protected)
+      {
+        path: "select-tenant",
+        element: (
+          <ProtectedRoute>
+            <SelectTenant />
+          </ProtectedRoute>
+        ),
+      },
+
       // Platform (platformAdmin only)
       {
         path: "platform",
@@ -59,7 +77,10 @@ export const router = createBrowserRouter([
             </RoleGate>
           </ProtectedRoute>
         ),
-        children: [{ index: true, element: <PlatformDashboard /> }],
+        children: [
+          { index: true, element: <PlatformDashboard /> },
+          { path: "audit-logs", element: <AuditLogs /> }, // ✅ Feature #5
+        ],
       },
 
       // Tenant scoped
@@ -73,6 +94,9 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <TenantDashboard /> },
           { path: "projects", element: <ProjectsList /> },
+
+          // ✅ Optional: if you want /t/:tenantSlug/dashboard to work exactly
+          { path: "dashboard", element: <TenantDashboard /> },
         ],
       },
 

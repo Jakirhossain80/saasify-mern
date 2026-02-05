@@ -24,6 +24,15 @@ export const API = {
     // ✅ Optional legacy soft-delete endpoint (only if you keep it)
     // Matches: router.delete("/platform/tenants/:tenantId/soft", ...)
     softDeleteTenant: (tenantId: string) => `/platform/tenants/${tenantId}/soft`,
+
+    // ✅ Feature #3: Assign Tenant Admin (Membership upsert)
+    assignTenantAdmin: (tenantId: string) => `/platform/tenants/${tenantId}/admins`,
+
+    // ✅ Feature #4: Platform Analytics
+    analytics: "/platform/analytics",
+
+    // ✅ Feature #5: Audit Logs
+    auditLogs: "/platform/audit-logs",
   },
 
   tenant: {

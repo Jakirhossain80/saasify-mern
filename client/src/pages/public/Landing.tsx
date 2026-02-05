@@ -1,12 +1,16 @@
 // FILE: client/src/pages/public/Landing.tsx
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Check, Github, ShieldCheck } from "lucide-react";
+import { ArrowRight, Check, Github, LogOut } from "lucide-react";
 import { useAuthStore } from "../../store/auth.store";
+import { useAuth } from "../../hooks/useAuth";
 
 type NavItem = { label: string; href: string };
 
 export default function Landing() {
+  // ✅ Bootstrap auth here so Navbar always reflects correct logged-in state
+  const { logout } = useAuth({ bootstrap: true });
+
   const user = useAuthStore((s) => s.user);
   const activeTenantSlug = useAuthStore((s) => s.activeTenantSlug);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -32,6 +36,11 @@ export default function Landing() {
   const tenantDashboardTo = activeTenantSlug ? `/t/${activeTenantSlug}` : "/select-tenant";
   const tenantProjectsTo = activeTenantSlug ? `/t/${activeTenantSlug}/projects` : "/select-tenant";
 
+  const handleLogout = () => {
+    logout.mutate();
+    setMobileOpen(false);
+  };
+
   return (
     <div className="max-w-[1680px] mx-auto min-h-screen bg-white text-slate-900">
       {/* Navbar */}
@@ -39,7 +48,6 @@ export default function Landing() {
         <div className="mx-auto max-w-[1680px] px-4 py-3 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-2">
             <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border">
-              
               <img src="/logo-saasiry.png" alt="logo-image" className="w-4 h-4" />
             </span>
             <span className="font-semibold tracking-tight">SaaSify</span>
@@ -53,18 +61,31 @@ export default function Landing() {
             ))}
           </nav>
 
+          {/* Desktop actions */}
           <div className="hidden md:flex items-center gap-2">
             {user ? (
               <>
                 <span className="text-xs text-slate-600">
                   {user.email} • <span className="font-medium">{user.platformRole}</span>
                 </span>
+
                 <Link
                   to={dashboardTo}
                   className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm hover:bg-slate-50"
                 >
                   Open dashboard <ArrowRight className="h-4 w-4" />
                 </Link>
+
+                {/* ✅ Sign out button */}
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  disabled={logout.isPending}
+                  className="inline-flex items-center gap-2 rounded-lg border px-3 py-2 text-sm hover:bg-slate-50 disabled:opacity-60"
+                >
+                  <LogOut className="h-4 w-4" />
+                  {logout.isPending ? "Signing out..." : "Sign out"}
+                </button>
               </>
             ) : (
               <>
@@ -92,6 +113,7 @@ export default function Landing() {
           </button>
         </div>
 
+        {/* Mobile dropdown */}
         {mobileOpen && (
           <div className="md:hidden border-t bg-white">
             <div className="mx-auto max-w-6xl px-4 py-3 flex flex-col gap-3">
@@ -103,9 +125,9 @@ export default function Landing() {
                 ))}
               </div>
 
-              <div className="flex gap-2 pt-2">
+              <div className="flex flex-col gap-2 pt-2">
                 {!user ? (
-                  <>
+                  <div className="flex gap-2">
                     <Link
                       to="/sign-in"
                       className="flex-1 rounded-lg border px-3 py-2 text-sm text-center hover:bg-slate-50"
@@ -120,15 +142,27 @@ export default function Landing() {
                     >
                       Start free
                     </Link>
-                  </>
+                  </div>
                 ) : (
-                  <Link
-                    to={dashboardTo}
-                    className="flex-1 rounded-lg bg-slate-900 px-3 py-2 text-sm text-white text-center hover:bg-slate-800"
-                    onClick={() => setMobileOpen(false)}
-                  >
-                    Open dashboard
-                  </Link>
+                  <>
+                    <Link
+                      to={dashboardTo}
+                      className="w-full rounded-lg bg-slate-900 px-3 py-2 text-sm text-white text-center hover:bg-slate-800"
+                      onClick={() => setMobileOpen(false)}
+                    >
+                      Open dashboard
+                    </Link>
+
+                    {/* ✅ Mobile sign out */}
+                    <button
+                      type="button"
+                      onClick={handleLogout}
+                      disabled={logout.isPending}
+                      className="w-full rounded-lg border px-3 py-2 text-sm hover:bg-slate-50 disabled:opacity-60"
+                    >
+                      {logout.isPending ? "Signing out..." : "Sign out"}
+                    </button>
+                  </>
                 )}
               </div>
             </div>
@@ -426,10 +460,7 @@ export default function Landing() {
               q="Do you support audit logs?"
               a="Yes. Key actions (projects, invites, memberships) write audit logs with actor, action, target and timestamp."
             />
-            <FaqItem
-              q="Can I self-host?"
-              a="Yes. It's a standard MERN setup (Vite client + Express server + MongoDB Atlas)."
-            />
+            <FaqItem q="Can I self-host?" a="Yes. It's a standard MERN setup (Vite client + Express server + MongoDB Atlas)." />
             <FaqItem
               q="Is this production ready?"
               a="The foundations are production-grade. UI polish and advanced features (SSO, billing, analytics) can be added next."
@@ -444,9 +475,7 @@ export default function Landing() {
           <div className="rounded-2xl border bg-white p-6 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
             <div className="space-y-2">
               <div className="text-xl md:text-2xl font-semibold">Start organizing projects across tenants today.</div>
-              <div className="text-sm text-slate-600">
-                Build on a secure multi-tenant foundation with RBAC and audit logs.
-              </div>
+              <div className="text-sm text-slate-600">Build on a secure multi-tenant foundation with RBAC and audit logs.</div>
             </div>
 
             <div className="flex flex-col sm:flex-row gap-3 w-full md:w-auto">
@@ -473,9 +502,7 @@ export default function Landing() {
           <div className="grid gap-8 md:grid-cols-4">
             <div className="space-y-2">
               <div className="font-semibold">SaaSify</div>
-              <div className="text-sm text-slate-600">
-                A multi-tenant Projects dashboard built with MERN + TypeScript.
-              </div>
+              <div className="text-sm text-slate-600">A multi-tenant Projects dashboard built with MERN + TypeScript.</div>
             </div>
 
             <div className="space-y-2 text-sm">
@@ -526,7 +553,9 @@ export default function Landing() {
             </div>
           </div>
 
-          <div className="mt-8 border-t pt-6 text-xs text-slate-500">© {new Date().getFullYear()} SaaSify. All rights reserved.</div>
+          <div className="mt-8 border-t pt-6 text-xs text-slate-500">
+            © {new Date().getFullYear()} SaaSify. All rights reserved.
+          </div>
         </div>
       </footer>
     </div>
@@ -554,7 +583,9 @@ function FeatureCard({ title, desc }: { title: string; desc: string }) {
 function StepCard({ step, title, desc }: { step: string; title: string; desc: string }) {
   return (
     <div className="rounded-2xl border bg-white p-5 shadow-sm">
-      <div className="inline-flex h-8 w-8 items-center justify-center rounded-lg border text-sm font-semibold">{step}</div>
+      <div className="inline-flex h-8 w-8 items-center justify-center rounded-lg border text-sm font-semibold">
+        {step}
+      </div>
       <div className="mt-3 font-semibold">{title}</div>
       <div className="mt-2 text-sm text-slate-600 leading-relaxed">{desc}</div>
     </div>

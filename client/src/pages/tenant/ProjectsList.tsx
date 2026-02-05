@@ -14,11 +14,10 @@ type ProjectItem = {
 
 export default function ProjectsList() {
   const { tenantSlug = "" } = useParams();
-  const user = useAuthStore((s) => s.user);
 
-  const isTenantAdminUi = user?.platformRole === "platformAdmin"; // placeholder UI gate
-  // NOTE: true tenant role should come from a membership endpoint later (Phase 7+)
-  // For now this is just to demonstrate UI gating mechanics.
+  // ✅ Use the REAL tenant role (set by SelectTenant via /t/:tenantSlug/me)
+  const activeTenantRole = useAuthStore((s) => s.activeTenantRole);
+  const isTenantAdminUi = activeTenantRole === "tenantAdmin";
 
   const projectsQ = useQuery({
     queryKey: ["tenant", tenantSlug, "projects"],
@@ -34,14 +33,14 @@ export default function ProjectsList() {
         <div className="flex items-center justify-between">
           <div className="text-muted-foreground">Tenant: {tenantSlug}</div>
 
-          {/* UI-only gating example */}
+          {/* ✅ Tenant admin only (UI gating) */}
           {isTenantAdminUi && <button className="border rounded px-3 py-1">Create Project</button>}
         </div>
 
         {projectsQ.isLoading && <div>Loading projects...</div>}
-        {projectsQ.isError && <div>Failed to load projects.</div>}
+        {projectsQ.isError && <div className="text-rose-600">Failed to load projects.</div>}
 
-        {projectsQ.data && (
+        {projectsQ.data && projectsQ.data.length > 0 && (
           <ul className="space-y-2">
             {projectsQ.data.map((p) => (
               <li key={p.id} className="border rounded p-3">
@@ -50,6 +49,18 @@ export default function ProjectsList() {
               </li>
             ))}
           </ul>
+        )}
+
+        {projectsQ.data && projectsQ.data.length === 0 && (
+          <div className="text-sm text-slate-600">No projects found.</div>
+        )}
+
+        {/* Helpful hint if role not loaded yet */}
+        {!activeTenantRole && (
+          <div className="text-xs text-slate-500">
+            Note: Tenant role is not loaded yet. Go to <span className="font-medium">/select-tenant</span> and open a
+            tenant again to load permissions.
+          </div>
         )}
       </div>
     </PageShell>

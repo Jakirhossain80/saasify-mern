@@ -12,10 +12,14 @@ export const http = axios.create({
 // Attach access token to every request if present
 http.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = useAuthStore.getState().accessToken;
+
   if (token) {
-    config.headers = config.headers ?? {};
-    config.headers.Authorization = `Bearer ${token}`;
+    config.headers = {
+      ...(config.headers ?? {}),
+      Authorization: `Bearer ${token}`,
+    };
   }
+
   return config;
 });
 
@@ -46,8 +50,13 @@ async function refreshAccessToken(): Promise<string | null> {
     );
 
     const nextToken = data?.accessToken ?? null;
-    if (nextToken) useAuthStore.getState().setAccessToken(nextToken);
-    if (data?.user) useAuthStore.getState().setUser(data.user);
+
+    if (nextToken && typeof useAuthStore.getState().setAccessToken === "function") {
+      useAuthStore.getState().setAccessToken(nextToken);
+    }
+    if (data?.user && typeof useAuthStore.getState().setUser === "function") {
+      useAuthStore.getState().setUser(data.user);
+    }
 
     return nextToken;
   } catch {
@@ -60,6 +69,7 @@ http.interceptors.response.use(
   (res) => res,
   async (error: AxiosError<any>) => {
     const status = error.response?.status;
+
     const original =
       error.config as (InternalAxiosRequestConfig & { _retry?: boolean }) | undefined;
 
@@ -72,7 +82,8 @@ http.interceptors.response.use(
     if (original._retry) throw error;
 
     // Don't attempt refresh for auth endpoints (avoid loops)
-    const url = (original.url ?? "").toString();
+    const url = String(original.url ?? "");
+
     const isAuthCall =
       url.includes("/auth/login") ||
       url.includes("/auth/register") ||
@@ -88,9 +99,12 @@ http.interceptors.response.use(
 
     if (!isRefreshing) {
       isRefreshing = true;
-      refreshPromise = refreshAccessToken().finally(() => {
-        isRefreshing = false;
-      });
+
+      refreshPromise = refreshAccessToken()
+        .finally(() => {
+          isRefreshing = false;
+          refreshPromise = null; // ✅ important cleanup
+        });
     }
 
     const newToken = await refreshPromise;
@@ -102,10 +116,11 @@ http.interceptors.response.use(
     }
 
     // Retry original request with new token
-    original.headers = original.headers ?? {};
-    original.headers.Authorization = `Bearer ${newToken}`;
+    original.headers = {
+      ...(original.headers ?? {}),
+      Authorization: `Bearer ${newToken}`,
+    };
+
     return http.request(original);
   }
 );
-
-
