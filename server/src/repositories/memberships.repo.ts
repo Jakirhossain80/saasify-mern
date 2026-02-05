@@ -47,3 +47,42 @@ export async function getActiveMembershipByTenantAndUser(input: {
     status: "active",
   }).exec();
 }
+
+/**
+ * Find membership (any status/role) by tenant + user
+ * Used by platform operations (like assigning tenant admin).
+ */
+export async function findMembershipByTenantAndUser(
+  tenantId: Types.ObjectId,
+  userId: Types.ObjectId
+): Promise<MembershipDoc | null> {
+  await connectDB();
+
+  return Membership.findOne({ tenantId, userId }).exec();
+}
+
+/**
+ * Upsert tenant admin membership
+ * - If membership exists: sets role="tenantAdmin", status="active"
+ * - If not exists: creates new membership with those values
+ */
+export async function upsertTenantAdminMembership(
+  tenantId: Types.ObjectId,
+  userId: Types.ObjectId
+): Promise<MembershipDoc> {
+  await connectDB();
+
+  const membership = await Membership.findOneAndUpdate(
+    { tenantId, userId },
+    { $set: { role: "tenantAdmin", status: "active" } },
+    { new: true, upsert: true, setDefaultsOnInsert: true }
+  ).exec();
+
+  // In theory, with upsert:true + new:true, this should never be null.
+  // But we keep a safety guard to avoid returning null in TypeScript.
+  if (!membership) {
+    throw new Error("Failed to upsert tenant admin membership");
+  }
+
+  return membership;
+}

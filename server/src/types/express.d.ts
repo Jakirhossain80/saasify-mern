@@ -5,10 +5,23 @@ import type { Types } from "mongoose";
 declare global {
   namespace Express {
     interface Request {
+      // Auth (set by requireAuth)
+      user?: {
+        userId: string;
+        email: string;
+        platformRole: "user" | "platformAdmin";
+      };
+
+      // Tenant context (set by resolveTenant)
+      tenantId?: Types.ObjectId;
+      tenantSlug?: string;
+
+      // Tenant role (set by requireTenantMembership)
+      tenantRole?: "tenantAdmin" | "member";
+
       /**
-       * Filled by tenantResolve middleware (Phase 2).
-       * - null: no tenant header OR tenant not found
-       * - object: resolved tenant identity
+       * Phase-2 passive resolver (header-based) - you still have this too
+       * Filled by tenantResolve middleware
        */
       tenant: { tenantId: Types.ObjectId; slug: string } | null;
     }

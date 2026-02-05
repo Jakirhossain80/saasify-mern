@@ -11,7 +11,8 @@ import {
   getProjectHandler,
   listProjectsHandler,
 } from "../controllers/projects.controller";
-import { listTenantMembersHandler } from "../controllers/memberships.controller";
+import { listTenantMembersHandler, getMyTenantContextHandler } from "../controllers/memberships.controller";
+
 
 const router = Router();
 
@@ -46,5 +47,6 @@ tenantRouter.post("/projects", requireTenantRole(["tenantAdmin"]), createProject
  * - tenant admins only
  */
 tenantRouter.get("/members", requireTenantRole(["tenantAdmin"]), listTenantMembersHandler);
+tenantRouter.get("/me", getMyTenantContextHandler);
 
 export default router;

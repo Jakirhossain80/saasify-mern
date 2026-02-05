@@ -9,15 +9,23 @@ import {
   getTenantDetailsHandler,
   listAllTenantsHandler,
 
-  // existing
+  // Legacy / existing
   setTenantSuspendedHandler,
   softDeleteTenantHandler,
 
-  // ✅ Feature #2 (new)
+  // ✅ Feature #2
   archiveTenantHandler,
   unarchiveTenantHandler,
   safeDeleteTenantHandler,
 } from "../controllers/tenants.controller";
+
+import { assignTenantAdminController } from "../controllers/memberships.controller";
+
+// ✅ Feature #4
+import { getPlatformAnalyticsHandler } from "../controllers/analytics.controller";
+
+// ✅ Feature #5
+import { listPlatformAuditLogsHandler } from "../controllers/auditLogs.controller";
 
 const router = Router();
 
@@ -32,7 +40,9 @@ const router = Router();
 router.use("/platform", requireAuth, requirePlatformAdmin);
 
 /**
+ * =========================
  * Module 1: Tenants (platform)
+ * =========================
  */
 
 // ✅ Create tenant
@@ -72,5 +82,30 @@ router.patch("/platform/tenants/:tenantId/unarchive", unarchiveTenantHandler);
  * This is the recommended DELETE behavior.
  */
 router.delete("/platform/tenants/:tenantId", safeDeleteTenantHandler);
+
+/**
+ * =========================
+ * ✅ Feature #3: Assign Tenant Admins (Membership Records)
+ * =========================
+ * POST /api/platform/tenants/:tenantId/admins
+ * body: { "email": "admin@tenant.com" }
+ */
+router.post("/platform/tenants/:tenantId/admins", assignTenantAdminController);
+
+/**
+ * =========================
+ * ✅ Feature #4: Platform Analytics
+ * =========================
+ * GET /api/platform/analytics
+ */
+router.get("/platform/analytics", getPlatformAnalyticsHandler);
+
+/**
+ * =========================
+ * ✅ Feature #5: Platform Audit Logs
+ * =========================
+ * GET /api/platform/audit-logs?page=1&limit=20&action=TENANT_CREATED
+ */
+router.get("/platform/audit-logs", listPlatformAuditLogsHandler);
 
 export default router;
