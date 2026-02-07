@@ -22,6 +22,12 @@ import AuditLogs from "../pages/platform/AuditLogs"; // ✅ Feature #5
 import TenantDashboard from "../pages/tenant/TenantDashboard";
 import ProjectsList from "../pages/tenant/ProjectsList";
 
+// ✅ Tenant placeholder pages (Phase 7)
+import Members from "../pages/tenant/Members";
+import Invites from "../pages/tenant/Invites";
+import Analytics from "../pages/tenant/Analytics";
+import Settings from "../pages/tenant/Settings";
+
 // ✅ Add SelectTenant route/page
 import SelectTenant from "../pages/tenant/SelectTenant";
 
@@ -95,8 +101,42 @@ export const router = createBrowserRouter([
           { index: true, element: <TenantDashboard /> },
           { path: "projects", element: <ProjectsList /> },
 
-          // ✅ Optional: if you want /t/:tenantSlug/dashboard to work exactly
+          // ✅ Optional alias: /t/:tenantSlug/dashboard
           { path: "dashboard", element: <TenantDashboard /> },
+
+          // ✅ Phase 7: routed placeholder pages (tenantAdmin UX gating)
+          {
+            path: "members",
+            element: (
+              <RoleGate allowTenantRoles={["tenantAdmin"]}>
+                <Members />
+              </RoleGate>
+            ),
+          },
+          {
+            path: "invites",
+            element: (
+              <RoleGate allowTenantRoles={["tenantAdmin"]}>
+                <Invites />
+              </RoleGate>
+            ),
+          },
+          {
+            path: "analytics",
+            element: (
+              <RoleGate allowTenantRoles={["tenantAdmin"]}>
+                <Analytics />
+              </RoleGate>
+            ),
+          },
+          {
+            path: "settings",
+            element: (
+              <RoleGate allowTenantRoles={["tenantAdmin"]}>
+                <Settings />
+              </RoleGate>
+            ),
+          },
         ],
       },
 

@@ -52,7 +52,13 @@ export const useAuthStore = create<AuthState>((set) => ({
   setUser: (user) => set({ user }),
   setBootstrapped: (v) => set({ isBootstrapped: v }),
 
-  setActiveTenantSlug: (slug) => set({ activeTenantSlug: slug }),
+  // ✅ Persist tenant slug so refresh/direct URL works consistently
+  setActiveTenantSlug: (slug) => {
+    if (slug) localStorage.setItem("activeTenantSlug", slug);
+    else localStorage.removeItem("activeTenantSlug");
+    set({ activeTenantSlug: slug });
+  },
+
   setActiveTenantRole: (role) => set({ activeTenantRole: role }),
 
   /**

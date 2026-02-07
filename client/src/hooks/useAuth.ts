@@ -15,15 +15,13 @@ type UseAuthOptions = {
  * - refresh -> accessToken
  * - /auth/me -> user
  *
- * ✅ NEW (safe + minimal):
- * - restore activeTenantSlug from localStorage if missing
- * - if we have user + tenantSlug, fetch tenant role and store activeTenantRole
+ * ✅ Also restores:
+ * - activeTenantSlug from localStorage (if missing)
+ * - activeTenantRole by calling: GET /api/t/:tenantSlug/me
  *
- * Backend expectation (recommended):
- * GET /api/tenant/me with header: x-tenant-slug
- * returns: { role: "tenantAdmin" | "member" }
- *
- * If your backend endpoint differs, change ONLY the URL in fetchMyTenantRole().
+ * Backend expectation:
+ * GET /api/t/:tenantSlug/me
+ * returns: { tenant: {...}, role: "tenantAdmin" | "member" }
  */
 export function useAuth(options: UseAuthOptions = {}) {
   const shouldBootstrap = options.bootstrap ?? true;
@@ -33,6 +31,7 @@ export function useAuth(options: UseAuthOptions = {}) {
   const isBootstrapped = useAuthStore((s) => s.isBootstrapped);
 
   const activeTenantSlug = useAuthStore((s) => s.activeTenantSlug);
+  const activeTenantRole = useAuthStore((s) => s.activeTenantRole);
 
   const setAccessToken = useAuthStore((s) => s.setAccessToken);
   const setUser = useAuthStore((s) => s.setUser);
@@ -43,11 +42,11 @@ export function useAuth(options: UseAuthOptions = {}) {
   const setActiveTenantRole = useAuthStore((s) => s.setActiveTenantRole);
 
   async function fetchMyTenantRole(tenantSlug: string): Promise<TenantRole> {
-    const url = "/api/tenant/me";
-
-    const { data } = await http.get<{ role?: TenantRole; membership?: { role?: TenantRole } }>(url, {
-      headers: { "x-tenant-slug": tenantSlug },
-    });
+    // ✅ Correct endpoint in your project:
+    // GET /api/t/:tenantSlug/me
+    const { data } = await http.get<{ role?: TenantRole; membership?: { role?: TenantRole } }>(
+      API.tenant.me(tenantSlug)
+    );
 
     const role = (data?.role ?? data?.membership?.role ?? null) as TenantRole | null;
     if (role !== "tenantAdmin" && role !== "member") throw new Error("Tenant role not found");
@@ -65,7 +64,7 @@ export function useAuth(options: UseAuthOptions = {}) {
             const { data } = await http.post(API.auth.refresh, {});
             if (data?.accessToken) setAccessToken(data.accessToken);
           } catch {
-            // ignore
+            // ignore refresh errors (user not logged in)
           }
         }
 
@@ -79,23 +78,23 @@ export function useAuth(options: UseAuthOptions = {}) {
           }
         }
 
-        // ✅ 3) restore tenant slug from localStorage (if not in store)
+        // 3) restore tenant slug from localStorage (if not in store)
         const storedSlug = localStorage.getItem("activeTenantSlug")?.trim() || null;
         if (!useAuthStore.getState().activeTenantSlug && storedSlug) {
           setActiveTenantSlug(storedSlug);
         }
 
-        // ✅ 4) if we have user + tenantSlug, fetch tenant role (for RoleGate)
+        // 4) if we have user + tenantSlug and role not loaded, fetch tenant role
         const u = useAuthStore.getState().user;
         const slug = useAuthStore.getState().activeTenantSlug;
+        const roleInStore = useAuthStore.getState().activeTenantRole;
 
-        if (u && slug) {
+        if (u && slug && !roleInStore) {
           try {
             const role = await fetchMyTenantRole(slug);
             setActiveTenantRole(role);
           } catch {
-            // If tenant no longer valid or membership removed:
-            // keep user logged in, but force tenant re-selection
+            // keep user logged in, but tenant context invalid / removed
             setActiveTenantRole(null);
           }
         }
@@ -118,8 +117,9 @@ export function useAuth(options: UseAuthOptions = {}) {
       setUser(data.user);
       setBootstrapped(true);
 
-      // ✅ after login, try to rehydrate tenant role if slug already stored
+      // after login, try to rehydrate tenant role if slug already stored
       const storedSlug = localStorage.getItem("activeTenantSlug")?.trim() || null;
+
       if (storedSlug) {
         setActiveTenantSlug(storedSlug);
         try {
@@ -141,8 +141,8 @@ export function useAuth(options: UseAuthOptions = {}) {
 
   /**
    * ✅ PRODUCTION FIX:
-   * Clear client auth state immediately on click (optimistic logout),
-   * then call server to revoke refresh session + clear cookie.
+   * Clear client auth state immediately (optimistic logout),
+   * then call server to clear cookie / revoke refresh.
    */
   const logout = useMutation({
     mutationFn: async () => {
@@ -162,6 +162,7 @@ export function useAuth(options: UseAuthOptions = {}) {
     user,
     isBootstrapped,
     activeTenantSlug,
+    activeTenantRole,
     bootstrap,
     login,
     logout,

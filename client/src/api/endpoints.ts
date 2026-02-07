@@ -18,11 +18,9 @@ export const API = {
     deleteTenant: (tenantId: string) => `/platform/tenants/${tenantId}`,
 
     // ✅ Optional legacy endpoint (only if you still use it in UI/Postman)
-    // Matches: router.patch("/platform/tenants/:tenantId/suspend", ...)
     suspendTenant: (tenantId: string) => `/platform/tenants/${tenantId}/suspend`,
 
     // ✅ Optional legacy soft-delete endpoint (only if you keep it)
-    // Matches: router.delete("/platform/tenants/:tenantId/soft", ...)
     softDeleteTenant: (tenantId: string) => `/platform/tenants/${tenantId}/soft`,
 
     // ✅ Feature #3: Assign Tenant Admin (Membership upsert)
@@ -36,6 +34,11 @@ export const API = {
   },
 
   tenant: {
+    // ✅ Projects (slug based)
     projects: (tenantSlug: string) => `/t/${tenantSlug}/projects`,
+
+    // ✅ Tenant context (role) for selected tenant
+    // Matches backend: GET /api/t/:tenantSlug/me
+    me: (tenantSlug: string) => `/t/${tenantSlug}/me`,
   },
 } as const;
