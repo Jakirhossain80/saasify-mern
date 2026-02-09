@@ -9,6 +9,12 @@ import {
   getActiveMembershipByTenantAndUser,
   findMembershipByTenantAndUser,
   upsertTenantAdminMembership,
+  // Phase 8 (2) repos:
+  listMembersByTenantRepo,
+  findActiveMembershipRepo,
+  updateMemberRoleRepo,
+  removeMemberRepo,
+  countActiveTenantAdminsRepo,
 } from "../repositories/memberships.repo";
 
 export type MembershipStatus = "active" | "removed";
@@ -43,16 +49,6 @@ export async function getMembership(
 ): Promise<MembershipDoc | null> {
   return getActiveMembershipByTenantAndUser({ tenantId, userId });
 }
-
-/**
- * NOTE:
- * Your existing service had listMembershipsForTenant/listMembershipsForUser/update/remove helpers,
- * but they are not present in the repo code you shared for this merge.
- * So we keep the file minimal + safe, without inventing missing repo functions.
- *
- * If you paste your full repo file containing those list/update/remove functions,
- * I can merge them back here too.
- */
 
 /**
  * Helper used by invites flow.
@@ -93,8 +89,7 @@ export async function assignTenantAdminService(input: AssignTenantAdminInput) {
   // 1) Find tenant
   const tenant = await Tenant.findById(tenantId);
   if (!tenant || tenant.isArchived) {
-    const err = new Error("Tenant not found or archived");
-    // @ts-expect-error attach status for errorHandler
+    const err = new Error("Tenant not found or archived") as Error & { status?: number };
     err.status = 404;
     throw err;
   }
@@ -103,8 +98,7 @@ export async function assignTenantAdminService(input: AssignTenantAdminInput) {
   const normalizedEmail = email.trim().toLowerCase();
   const user = await User.findOne({ email: normalizedEmail });
   if (!user) {
-    const err = new Error("User not found");
-    // @ts-expect-error attach status for errorHandler
+    const err = new Error("User not found") as Error & { status?: number };
     err.status = 404;
     throw err;
   }
@@ -130,4 +124,99 @@ export async function assignTenantAdminService(input: AssignTenantAdminInput) {
   });
 
   return membership;
+}
+
+/* =========================================================
+   Phase 8 (2) — Members Management (Tenant Admin)
+   ========================================================= */
+
+type Role = "tenantAdmin" | "member";
+
+function makeError(status: number, message: string) {
+  const err = new Error(message) as Error & { status?: number };
+  err.status = status;
+  return err;
+}
+
+/**
+ * (A) List members of a tenant
+ * Response shape required: { items: [...] }
+ */
+export async function listTenantMembersService(tenantId: string) {
+  const items = await listMembersByTenantRepo(tenantId);
+  return { items };
+}
+
+/**
+ * (B) Update member role (tenantAdmin ↔ member)
+ * Safety: cannot demote the last active tenantAdmin
+ */
+export async function updateTenantMemberRoleService(opts: {
+  tenantId: string;
+  targetUserId: string;
+  role: Role;
+  actorUserId?: string;
+}) {
+  const { tenantId, targetUserId, role, actorUserId } = opts;
+
+  const targetMembership = await findActiveMembershipRepo(tenantId, targetUserId);
+  if (!targetMembership) throw makeError(404, "Membership not found (active).");
+
+  // If target is tenantAdmin and we are demoting -> last admin protection
+  const isDemotingAdmin = targetMembership.role === "tenantAdmin" && role === "member";
+  if (isDemotingAdmin) {
+    const adminsCount = await countActiveTenantAdminsRepo(tenantId);
+    if (adminsCount <= 1) {
+      throw makeError(400, "Cannot demote the last active tenantAdmin of this tenant.");
+    }
+  }
+
+  // Safety: if actor is trying to demote self while last admin
+  if (actorUserId && actorUserId === targetUserId && isDemotingAdmin) {
+    const adminsCount = await countActiveTenantAdminsRepo(tenantId);
+    if (adminsCount <= 1) {
+      throw makeError(400, "You cannot demote yourself because you are the last active tenantAdmin.");
+    }
+  }
+
+  const updated = await updateMemberRoleRepo(tenantId, targetUserId, role);
+  if (!updated) throw makeError(404, "Membership not found or not active.");
+
+  return { membership: updated };
+}
+
+/**
+ * (C) Remove member (soft remove => status="removed")
+ * Safety: cannot remove the last active tenantAdmin
+ */
+export async function removeTenantMemberService(opts: {
+  tenantId: string;
+  targetUserId: string;
+  actorUserId?: string;
+}) {
+  const { tenantId, targetUserId, actorUserId } = opts;
+
+  const targetMembership = await findActiveMembershipRepo(tenantId, targetUserId);
+  if (!targetMembership) throw makeError(404, "Membership not found (active).");
+
+  const removingAdmin = targetMembership.role === "tenantAdmin";
+  if (removingAdmin) {
+    const adminsCount = await countActiveTenantAdminsRepo(tenantId);
+    if (adminsCount <= 1) {
+      throw makeError(400, "Cannot remove the last active tenantAdmin of this tenant.");
+    }
+  }
+
+  // Safety: if actor is removing self and is last admin
+  if (actorUserId && actorUserId === targetUserId && removingAdmin) {
+    const adminsCount = await countActiveTenantAdminsRepo(tenantId);
+    if (adminsCount <= 1) {
+      throw makeError(400, "You cannot remove yourself because you are the last active tenantAdmin.");
+    }
+  }
+
+  const updated = await removeMemberRepo(tenantId, targetUserId);
+  if (!updated) throw makeError(404, "Membership not found or not active.");
+
+  return { ok: true, userId: targetUserId, status: "removed" as const };
 }

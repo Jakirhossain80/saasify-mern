@@ -10,12 +10,26 @@ import { Tenant } from "../models/Tenant";
 import {
   assignTenantAdminParamsSchema,
   assignTenantAdminBodySchema,
+  tenantIdParamSchema,
+  memberParamsSchema,
+  patchMemberRoleBodySchema,
 } from "../validations/membership.schema";
+
+import {
+  listTenantMembersService,
+  updateTenantMemberRoleService,
+  removeTenantMemberService,
+} from "../services/memberships.service";
+
+/* =========================================================
+   Phase 5 (legacy/minimal) — Keep existing behavior
+   NOTE: Some older tenant routes may still use this handler name.
+   ========================================================= */
 
 /**
  * Phase 5 (minimal):
  * List tenant members (admin-only route in tenant.routes.ts)
- * - Requires: requireAuth + resolveTenant + requireTenantMembership already ran
+ * - Requires: requireAuth + resolveTenant/tenantResolve + requireTenantMembership already ran
  * - Route guard should enforce tenantAdmin; this handler just returns scoped data.
  */
 export async function listTenantMembersHandler(
@@ -53,6 +67,10 @@ export async function listTenantMembersHandler(
     return next(err);
   }
 }
+
+/* =========================================================
+   Feature #3 (platform-only) — Keep existing behavior
+   ========================================================= */
 
 /**
  * ✅ Feature #3 (platform-only):
@@ -163,6 +181,10 @@ export async function assignTenantAdminController(
   }
 }
 
+/* =========================================================
+   Tenant helper — Keep existing behavior
+   ========================================================= */
+
 /**
  * Tenant helper:
  * GET /api/t/:tenantSlug/me
@@ -193,6 +215,81 @@ export async function getMyTenantContextHandler(req: Request, res: Response, nex
       },
       role: tenantRole,
     });
+  } catch (err) {
+    return next(err);
+  }
+}
+
+/* =========================================================
+   Phase 8 (2) — Members Management (Tenant Admin)
+   New handlers (service-driven, Postman-friendly)
+   ========================================================= */
+
+/**
+ * GET /api/tenant/:tenantId/members
+ * Response: { items: [...] }
+ */
+export async function listTenantMembers(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { tenantId } = tenantIdParamSchema.parse(req.params);
+    const result = await listTenantMembersService(tenantId);
+    return res.json(result);
+  } catch (err) {
+    return next(err);
+  }
+}
+
+/**
+ * PATCH /api/tenant/:tenantId/members/:userId
+ * body: { role: "tenantAdmin" | "member" }
+ * Response: { membership: {...} }
+ */
+export async function updateTenantMemberRole(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { tenantId, userId } = memberParamsSchema.parse(req.params);
+    const body = patchMemberRoleBodySchema.parse(req.body);
+
+    // Support both shapes: req.user.userId and req.user.id / req.user._id
+    const actorUserId =
+      (req.user as any)?.userId ??
+      (req.user as any)?.id ??
+      (req.user as any)?._id ??
+      undefined;
+
+    const result = await updateTenantMemberRoleService({
+      tenantId,
+      targetUserId: userId,
+      role: body.role,
+      actorUserId,
+    });
+
+    return res.json(result);
+  } catch (err) {
+    return next(err);
+  }
+}
+
+/**
+ * DELETE /api/tenant/:tenantId/members/:userId
+ * Response: { ok:true, userId, status:"removed" }
+ */
+export async function removeTenantMember(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { tenantId, userId } = memberParamsSchema.parse(req.params);
+
+    const actorUserId =
+      (req.user as any)?.userId ??
+      (req.user as any)?.id ??
+      (req.user as any)?._id ??
+      undefined;
+
+    const result = await removeTenantMemberService({
+      tenantId,
+      targetUserId: userId,
+      actorUserId,
+    });
+
+    return res.json(result);
   } catch (err) {
     return next(err);
   }

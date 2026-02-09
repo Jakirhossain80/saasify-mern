@@ -1,9 +1,9 @@
 // FILE: server/src/services/analytics.service.ts
+import mongoose, { type Types } from "mongoose";
 import { connectDB } from "../db/connect";
 import { Tenant } from "../models/Tenant";
 import { Project } from "../models/Project";
 import { Membership } from "../models/Membership";
-import type { Types } from "mongoose";
 
 /**
  * Existing type (kept for backward compatibility)
@@ -25,12 +25,34 @@ export type PlatformAnalyticsResponse = {
   chartData: Array<{ name: string; value: number }>;
 };
 
+/**
+ * ✅ Existing tenant dashboard stats type (kept exactly for existing UI usage)
+ * NOTE: This is used by getTenantDashboardStats() and includes chartData.
+ */
 export type TenantDashboardStats = {
   activeProjects: number;
   archivedProjects: number;
   membersCount: number;
   chartData: Array<{ name: string; value: number }>;
 };
+
+/**
+ * ✅ NEW: Tenant analytics endpoint response type (ONLY cards)
+ * GET /api/tenant/:tenantId/analytics
+ */
+export type TenantAnalyticsStats = {
+  activeProjects: number;
+  archivedProjects: number;
+  membersCount: number;
+};
+
+/**
+ * Helper: throw an Error with HTTP statusCode
+ * (works with typical errorHandler middleware)
+ */
+function httpError(statusCode: number, message: string) {
+  return Object.assign(new Error(message), { statusCode });
+}
 
 /**
  * Existing function (kept exactly, in case other parts already use it)
@@ -89,6 +111,7 @@ export async function getPlatformAnalyticsService(): Promise<PlatformAnalyticsRe
 
 /**
  * Tenant dashboard stats (used inside tenant dashboard)
+ * ✅ Kept as-is for backward compatibility with existing UI/usage.
  */
 export async function getTenantDashboardStats(
   tenantId: Types.ObjectId
@@ -109,5 +132,61 @@ export async function getTenantDashboardStats(
       { name: "Active", value: activeProjects },
       { name: "Archived", value: archivedProjects },
     ],
+  };
+}
+
+/**
+ * ✅ NEW — Tenant Analytics Stats (Module 3)
+ * Route: GET /api/tenant/:tenantId/analytics
+ *
+ * Rules (as per spec):
+ * - active projects:   { tenantId, status: "active",   deletedAt: null }
+ * - archived projects: { tenantId, status: "archived", deletedAt: null }
+ * - members:           { tenantId, status: "active" }
+ *
+ * Errors:
+ * - invalid tenantId -> 400
+ * - tenant not found -> 404
+ */
+export async function getTenantAnalyticsStats(
+  tenantId: string
+): Promise<TenantAnalyticsStats> {
+  await connectDB();
+
+  // 1) Validate tenantId param
+  if (!mongoose.isValidObjectId(tenantId)) {
+    throw httpError(400, "Invalid tenantId");
+  }
+
+  const tenantObjectId = new mongoose.Types.ObjectId(tenantId) as Types.ObjectId;
+
+  // 2) Tenant existence check (recommended)
+  const tenantExists = await Tenant.exists({ _id: tenantObjectId });
+  if (!tenantExists) {
+    throw httpError(404, "Tenant not found");
+  }
+
+  // 3) Count in parallel (fast + clean)
+  const [activeProjects, archivedProjects, membersCount] = await Promise.all([
+    Project.countDocuments({
+      tenantId: tenantObjectId,
+      status: "active",
+      deletedAt: null, // matches null OR missing (good for soft-delete)
+    }),
+    Project.countDocuments({
+      tenantId: tenantObjectId,
+      status: "archived",
+      deletedAt: null,
+    }),
+    Membership.countDocuments({
+      tenantId: tenantObjectId,
+      status: "active",
+    }),
+  ]);
+
+  return {
+    activeProjects,
+    archivedProjects,
+    membersCount,
   };
 }

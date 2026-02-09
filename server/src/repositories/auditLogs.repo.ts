@@ -41,16 +41,8 @@ function normalizePage(input: { page?: number; limit?: number }) {
  * =========================================
  */
 
-/**
- * PLATFORM scope audit logs
- * Returns newest first.
- *
- * Used by: services/auditLogs.service.ts -> getPlatformAuditLogs()
- * Must be exported with this exact name.
- */
 export async function listPlatformAuditLogs(p: Pagination = {}): Promise<AuditLogDoc[]> {
   await connectDB();
-
   const { limit, offset } = normalizePagination(p);
 
   return (await AuditLog.find({ scope: "platform" })
@@ -61,19 +53,11 @@ export async function listPlatformAuditLogs(p: Pagination = {}): Promise<AuditLo
     .exec()) as unknown as AuditLogDoc[];
 }
 
-/**
- * TENANT scope audit logs for a specific tenantId
- * Returns newest first.
- *
- * Used by: services/auditLogs.service.ts -> getTenantAuditLogs()
- * Must be exported with this exact name.
- */
 export async function listTenantAuditLogs(
   tenantId: Types.ObjectId,
   p: Pagination = {}
 ): Promise<AuditLogDoc[]> {
   await connectDB();
-
   const { limit, offset } = normalizePagination(p);
 
   return (await AuditLog.find({ scope: "tenant", tenantId })
@@ -84,16 +68,11 @@ export async function listTenantAuditLogs(
     .exec()) as unknown as AuditLogDoc[];
 }
 
-/**
- * Optional helper (sometimes useful for platform UI)
- * - Lists audit logs for a specific actor across scopes.
- */
 export async function listAuditLogsByActorUserId(
   actorUserId: Types.ObjectId,
   p: Pagination = {}
 ): Promise<AuditLogDoc[]> {
   await connectDB();
-
   const { limit, offset } = normalizePagination(p);
 
   return (await AuditLog.find({ actorUserId })
@@ -108,17 +87,8 @@ export async function listAuditLogsByActorUserId(
  * =========================================
  * ✅ CREATE AUDIT LOG (Backward compatible)
  * =========================================
- *
- * IMPORTANT:
- * Your project has had two different payload styles:
- *
- * Style A (older): { scope, action, entity:{type,id}, meta, ip, userAgent }
- * Style B (newer Feature specs): { actorUserId, action, targetType, targetId, tenantId, metadata }
- *
- * This repo supports BOTH styles without breaking older code.
  */
 
-/** Old style input (kept for existing services) */
 export type CreateAuditLogInputOld = {
   scope: AuditScope;
   tenantId?: Types.ObjectId | null;
@@ -133,11 +103,10 @@ export type CreateAuditLogInputOld = {
   userAgent?: string | null;
 };
 
-/** New style input (Feature #5 style) */
 export type CreateAuditLogInputNew = {
   actorUserId: Types.ObjectId;
-  action: AuditAction | string; // keep string to avoid tight coupling
-  targetType: AuditTargetType | string; // keep string for forward compatibility
+  action: AuditAction | string;
+  targetType: AuditTargetType | string;
   targetId: Types.ObjectId;
   tenantId?: Types.ObjectId | null;
   metadata?: Record<string, unknown>;
@@ -145,7 +114,6 @@ export type CreateAuditLogInputNew = {
 
 type CreateAuditLogInput = CreateAuditLogInputOld | CreateAuditLogInputNew;
 
-// overloads for nicer TS DX
 export async function createAuditLogRepo(
   input: CreateAuditLogInputOld,
   session?: ClientSession
@@ -155,10 +123,6 @@ export async function createAuditLogRepo(
   session?: ClientSession
 ): Promise<AuditLogDoc>;
 
-/**
- * ✅ Create/write audit log entry.
- * Supports BOTH payload styles.
- */
 export async function createAuditLogRepo(
   input: CreateAuditLogInput,
   session?: ClientSession
@@ -180,7 +144,7 @@ export async function createAuditLogRepo(
       id: typeof old.entity.id === "string" ? old.entity.id : String(old.entity.id),
     };
 
-    // keep both for compatibility (model sync will also help)
+    // keep both for compatibility
     payload.meta = old.meta ?? {};
     payload.metadata = old.meta ?? {};
 
@@ -193,27 +157,44 @@ export async function createAuditLogRepo(
   } else {
     const n = input as CreateAuditLogInputNew;
 
-    // default scope = platform for platform actions
     payload.scope = "platform";
-
     payload.actorUserId = n.actorUserId;
     payload.action = n.action;
 
     payload.targetType = n.targetType;
     payload.targetId = n.targetId;
 
-    // keep both for compatibility (model sync will also help)
     payload.metadata = n.metadata ?? {};
     payload.meta = n.metadata ?? {};
 
     payload.tenantId = n.tenantId ?? null;
   }
 
-  // Use save({session}) for transactional flows when session is passed
   const doc = new AuditLog(payload);
   await doc.save({ session });
 
   return doc as unknown as AuditLogDoc;
+}
+
+/**
+ * ✅ IMPORTANT FIX:
+ * Make sure `createAuditLog` is a REAL named export function
+ * because older services import it as:
+ *   import { createAuditLog } from "../repositories/auditLogs.repo";
+ */
+export async function createAuditLog(
+  input: CreateAuditLogInputOld,
+  session?: mongoose.ClientSession
+): Promise<AuditLogDoc>;
+export async function createAuditLog(
+  input: CreateAuditLogInputNew,
+  session?: mongoose.ClientSession
+): Promise<AuditLogDoc>;
+export async function createAuditLog(
+  input: CreateAuditLogInputOld | CreateAuditLogInputNew,
+  session?: mongoose.ClientSession
+): Promise<AuditLogDoc> {
+  return createAuditLogRepo(input as any, session);
 }
 
 /**
@@ -234,14 +215,6 @@ export type ListAuditLogsInput = {
   };
 };
 
-/**
- * ✅ Platform Admin list endpoint (recommended):
- * - newest first
- * - supports filters
- * - defaults to scope: "platform" (safe)
- *
- * Returns items + total + page/limit.
- */
 export async function listAuditLogsRepo(input: ListAuditLogsInput): Promise<{
   items: Array<{
     id: string;
@@ -263,7 +236,6 @@ export async function listAuditLogsRepo(input: ListAuditLogsInput): Promise<{
   const { page, limit, skip } = normalizePage({ page: input.page, limit: input.limit });
   const f = input.filters ?? {};
 
-  // ✅ Platform endpoint: show platform logs by default
   const q: any = { scope: "platform" };
 
   if (f.action) q.action = f.action;
@@ -287,16 +259,11 @@ export async function listAuditLogsRepo(input: ListAuditLogsInput): Promise<{
         action: 1,
         actorUserId: 1,
         tenantId: 1,
-
-        // new style
         targetType: 1,
         targetId: 1,
         metadata: 1,
-
-        // legacy fallback
         entity: 1,
         meta: 1,
-
         createdAt: 1,
       })
       .lean()
@@ -312,21 +279,11 @@ export async function listAuditLogsRepo(input: ListAuditLogsInput): Promise<{
       id: String(r._id),
       scope: (r.scope ?? "platform") as "platform" | "tenant",
       action: String(r.action),
-
       actorUserId: r.actorUserId ? String(r.actorUserId) : null,
       tenantId: r.tenantId ? String(r.tenantId) : null,
-
-      // Prefer new fields if present, otherwise fallback to legacy entity
-      targetType: r.targetType
-        ? String(r.targetType)
-        : r.entity?.type
-          ? String(r.entity.type)
-          : null,
+      targetType: r.targetType ? String(r.targetType) : r.entity?.type ? String(r.entity.type) : null,
       targetId: r.targetId ? String(r.targetId) : r.entity?.id ? String(r.entity.id) : null,
-
       createdAt: r.createdAt,
-
-      // Prefer new metadata, fallback to legacy meta
       metadata: (r.metadata ?? r.meta ?? {}) as Record<string, unknown>,
     })),
   };

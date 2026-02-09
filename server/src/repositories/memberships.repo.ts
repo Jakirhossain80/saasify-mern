@@ -1,7 +1,19 @@
 // FILE: server/src/repositories/memberships.repo.ts
-import { type ClientSession, type Types } from "mongoose";
+import mongoose, { type ClientSession, type Types } from "mongoose";
 import { connectDB } from "../db/connect";
 import { Membership, type MembershipDoc } from "../models/Membership";
+
+/**
+ * Small helper to safely cast string -> ObjectId
+ * (keeps runtime mongoose import so mongoose.Types.ObjectId is available)
+ */
+function toObjectId(id: string | Types.ObjectId): Types.ObjectId {
+  return typeof id === "string" ? new mongoose.Types.ObjectId(id) : id;
+}
+
+/* =========================================================
+   Existing (KEEP): Membership creation + RBAC helpers
+   ========================================================= */
 
 /**
  * Create a membership (used during invite acceptance, signup bootstrap, etc.)
@@ -85,4 +97,92 @@ export async function upsertTenantAdminMembership(
   }
 
   return membership;
+}
+
+/* =========================================================
+   Phase 8 (2): Members Management (ADD)
+   - list members
+   - update role
+   - soft remove (status="removed")
+   ========================================================= */
+
+/**
+ * List members by tenant (returns memberships of any status)
+ * Controller/service can decide to filter if needed.
+ */
+export async function listMembersByTenantRepo(tenantId: string): Promise<MembershipDoc[]> {
+  await connectDB();
+  const tid = toObjectId(tenantId);
+
+  return Membership.find({ tenantId: tid }).sort({ createdAt: -1 }).exec();
+}
+
+/**
+ * Find ACTIVE membership by tenant + user (string ids)
+ * Used by members management service safety checks.
+ */
+export async function findActiveMembershipRepo(
+  tenantId: string,
+  userId: string
+): Promise<MembershipDoc | null> {
+  await connectDB();
+  const tid = toObjectId(tenantId);
+  const uid = toObjectId(userId);
+
+  return Membership.findOne({
+    tenantId: tid,
+    userId: uid,
+    status: "active",
+  }).exec();
+}
+
+/**
+ * Count active tenant admins of a tenant (last-admin protection)
+ */
+export async function countActiveTenantAdminsRepo(tenantId: string): Promise<number> {
+  await connectDB();
+  const tid = toObjectId(tenantId);
+
+  return Membership.countDocuments({
+    tenantId: tid,
+    role: "tenantAdmin",
+    status: "active",
+  }).exec();
+}
+
+/**
+ * Update member role (only if membership is active)
+ */
+export async function updateMemberRoleRepo(
+  tenantId: string,
+  userId: string,
+  role: "tenantAdmin" | "member"
+): Promise<MembershipDoc | null> {
+  await connectDB();
+  const tid = toObjectId(tenantId);
+  const uid = toObjectId(userId);
+
+  return Membership.findOneAndUpdate(
+    { tenantId: tid, userId: uid, status: "active" },
+    { $set: { role } },
+    { new: true }
+  ).exec();
+}
+
+/**
+ * Soft remove member (status="removed") only if membership is active
+ */
+export async function removeMemberRepo(
+  tenantId: string,
+  userId: string
+): Promise<MembershipDoc | null> {
+  await connectDB();
+  const tid = toObjectId(tenantId);
+  const uid = toObjectId(userId);
+
+  return Membership.findOneAndUpdate(
+    { tenantId: tid, userId: uid, status: "active" },
+    { $set: { status: "removed" } },
+    { new: true }
+  ).exec();
 }
