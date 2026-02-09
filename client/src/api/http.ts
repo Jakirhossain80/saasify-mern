@@ -2,11 +2,13 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "../store/auth.store";
 
-const baseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+// Normalize baseURL: remove trailing slashes to avoid /api//auth/refresh
+const rawBaseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
+const baseURL = String(rawBaseURL).replace(/\/+$/, "");
 
 export const http = axios.create({
   baseURL,
-  withCredentials: true, // needed for refresh-cookie auth
+  withCredentials: true, // needed for cookie-based auth
 });
 
 // Attach access token to every request if present
@@ -100,11 +102,10 @@ http.interceptors.response.use(
     if (!isRefreshing) {
       isRefreshing = true;
 
-      refreshPromise = refreshAccessToken()
-        .finally(() => {
-          isRefreshing = false;
-          refreshPromise = null; // ✅ important cleanup
-        });
+      refreshPromise = refreshAccessToken().finally(() => {
+        isRefreshing = false;
+        refreshPromise = null; // ✅ important cleanup
+      });
     }
 
     const newToken = await refreshPromise;

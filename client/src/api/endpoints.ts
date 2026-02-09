@@ -38,7 +38,15 @@ export const API = {
     projects: (tenantSlug: string) => `/t/${tenantSlug}/projects`,
 
     // ✅ Tenant context (role) for selected tenant
-    // Matches backend: GET /api/t/:tenantSlug/me
+    // Backend: GET /api/t/:tenantSlug/me  (baseURL already includes /api)
     me: (tenantSlug: string) => `/t/${tenantSlug}/me`,
+
+    // ✅ Members management (tenantId based)
+    members: (tenantId: string) => `/tenant/${tenantId}/members`,
+    memberByUser: (tenantId: string, userId: string) =>
+      `/tenant/${tenantId}/members/${userId}`,
+
+    // ✅ Phase 8 (3): Tenant Analytics Stats
+    analytics: (tenantId: string) => `/tenant/${tenantId}/analytics`,
   },
 } as const;

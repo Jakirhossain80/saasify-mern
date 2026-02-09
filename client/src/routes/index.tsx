@@ -22,7 +22,7 @@ import AuditLogs from "../pages/platform/AuditLogs"; // ✅ Feature #5
 import TenantDashboard from "../pages/tenant/TenantDashboard";
 import ProjectsList from "../pages/tenant/ProjectsList";
 
-// ✅ Tenant placeholder pages (Phase 7)
+// ✅ Tenant pages
 import Members from "../pages/tenant/Members";
 import Invites from "../pages/tenant/Invites";
 import Analytics from "../pages/tenant/Analytics";
@@ -104,11 +104,11 @@ export const router = createBrowserRouter([
           // ✅ Optional alias: /t/:tenantSlug/dashboard
           { path: "dashboard", element: <TenantDashboard /> },
 
-          // ✅ Phase 7: routed placeholder pages (tenantAdmin UX gating)
+          // ✅ Tenant Admin pages (UX gating)
           {
             path: "members",
             element: (
-              <RoleGate allowTenantRoles={["tenantAdmin"]}>
+              <RoleGate allowTenantRoles={["tenantAdmin"]} tenantDenyTo="/select-tenant">
                 <Members />
               </RoleGate>
             ),
@@ -116,7 +116,7 @@ export const router = createBrowserRouter([
           {
             path: "invites",
             element: (
-              <RoleGate allowTenantRoles={["tenantAdmin"]}>
+              <RoleGate allowTenantRoles={["tenantAdmin"]} tenantDenyTo="/select-tenant">
                 <Invites />
               </RoleGate>
             ),
@@ -124,7 +124,7 @@ export const router = createBrowserRouter([
           {
             path: "analytics",
             element: (
-              <RoleGate allowTenantRoles={["tenantAdmin"]}>
+              <RoleGate allowTenantRoles={["tenantAdmin"]} tenantDenyTo="/select-tenant">
                 <Analytics />
               </RoleGate>
             ),
@@ -132,7 +132,7 @@ export const router = createBrowserRouter([
           {
             path: "settings",
             element: (
-              <RoleGate allowTenantRoles={["tenantAdmin"]}>
+              <RoleGate allowTenantRoles={["tenantAdmin"]} tenantDenyTo="/select-tenant">
                 <Settings />
               </RoleGate>
             ),
