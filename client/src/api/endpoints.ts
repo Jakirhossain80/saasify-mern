@@ -46,7 +46,15 @@ export const API = {
     memberByUser: (tenantId: string, userId: string) =>
       `/tenant/${tenantId}/members/${userId}`,
 
+    // ✅ Phase 8 (Invites): Tenant Invites (tenantId based)
+    invites: (tenantId: string) => `/tenant/${tenantId}/invites`,
+    inviteById: (tenantId: string, inviteId: string) =>
+      `/tenant/${tenantId}/invites/${inviteId}`,
+
     // ✅ Phase 8 (3): Tenant Analytics Stats
     analytics: (tenantId: string) => `/tenant/${tenantId}/analytics`,
+
+    // ✅ Phase 8 (4): Tenant Settings (tenantId based)
+    settings: (tenantId: string) => `/tenant/${tenantId}/settings`,
   },
 } as const;

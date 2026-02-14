@@ -2,7 +2,6 @@
 import { useEffect } from "react";
 import { Link, NavLink, Outlet, useParams } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import PageShell from "../components/common/PageShell";
 import { useAuthStore, type TenantRole } from "../store/auth.store";
 import { http } from "../api/http";
 import { API } from "../api/endpoints";
@@ -33,12 +32,9 @@ export default function TenantLayout() {
   const setActiveTenantRole = useAuthStore((s) => s.setActiveTenantRole);
 
   /**
-   * ✅ Critical fix:
-   * Auto-load tenant role when user lands directly on /t/:tenantSlug/... (refresh / direct URL)
-   * This prevents the sidebar from being stuck on "Loading tenant permissions…"
-   *
-   * Backend requires Authorization Bearer token (requireAuth).
-   * Your http.ts interceptor already attaches the accessToken (and can refresh once if needed).
+   * ✅ Auto-load tenant role on direct visit / refresh
+   * NOTE: We intentionally do NOT wrap layout with PageShell,
+   * because tenant pages already use PageShell (to avoid double header).
    */
   const tenantMeQ = useQuery({
     queryKey: ["tenantMe", tenantSlug],
@@ -58,7 +54,7 @@ export default function TenantLayout() {
     }
   }, [tenantMeQ.data?.role, setActiveTenantRole]);
 
-  // Sidebar styles (keep your existing polished variant)
+  // Sidebar styles
   const linkBase = "block rounded-lg px-3 py-2 text-sm transition border";
   const linkActive = "bg-slate-900 text-white border-slate-900";
   const linkIdle = "bg-white hover:bg-slate-50 border-slate-200 text-slate-700";
@@ -69,121 +65,128 @@ export default function TenantLayout() {
   const isTenantAdmin = activeTenantRole === "tenantAdmin";
 
   return (
-    <PageShell title={`Tenant: ${tenantSlug}`}>
-      <div className="grid grid-cols-1 gap-6 md:grid-cols-[260px_1fr]">
-        {/* Sidebar */}
-        <aside className="h-fit rounded-2xl border bg-white p-4 shadow-sm">
-          {/* Tenant header */}
-          <div className="mb-4">
-            <div className="text-xs text-slate-500">Tenant</div>
-            <div className="text-base font-semibold text-slate-900">{tenantSlug}</div>
+    <div className="min-h-screen w-full bg-white text-slate-900">
+      {/* Skip link (a11y) */}
+      <a
+        href="#tenant-main-content"
+        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-50 focus:rounded-md focus:bg-white focus:px-3 focus:py-2 focus:text-sm focus:shadow"
+      >
+        Skip to content
+      </a>
 
-            {/* User */}
-            <div className="mt-1 text-xs text-slate-500 truncate">{user?.email}</div>
+      <main id="tenant-main-content" className="mx-auto max-w-6xl px-4 py-8">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-[260px_1fr]">
+          {/* Sidebar */}
+          <aside className="h-fit rounded-2xl border bg-white p-4 shadow-sm">
+            {/* Tenant header */}
+            <div className="mb-4">
+              <div className="text-xs text-slate-500">Tenant</div>
+              <div className="text-base font-semibold text-slate-900">{tenantSlug}</div>
 
-            {/* Role badge */}
-            <div className="mt-2 inline-flex items-center rounded-full border px-2.5 py-1 text-xs">
-              Role:{" "}
-              <span className="ml-1 font-medium">
-                {activeTenantRole ?? (isLoadingTenantPerms ? "loading..." : "unknown")}
-              </span>
+              {/* User */}
+              <div className="mt-1 text-xs text-slate-500 truncate">{user?.email}</div>
+
+              {/* Role badge */}
+              <div className="mt-2 inline-flex items-center rounded-full border px-2.5 py-1 text-xs">
+                Role:{" "}
+                <span className="ml-1 font-medium">
+                  {activeTenantRole ?? (isLoadingTenantPerms ? "loading..." : "unknown")}
+                </span>
+              </div>
+
+              {/* Loading / error helpers */}
+              {isLoadingTenantPerms && (
+                <div className="mt-3 text-xs text-slate-500">Loading tenant permissions…</div>
+              )}
+
+              {tenantPermsError && (
+                <div className="mt-3 rounded-lg border bg-rose-50 p-3 text-xs text-rose-700">
+                  Failed to load tenant permissions.
+                  <div className="mt-1 text-rose-700/90">
+                    Check: <span className="font-medium">GET /api/t/:tenantSlug/me</span>
+                  </div>
+                  <div className="mt-1 text-rose-700/90">
+                    Confirm you are an <span className="font-medium">active member</span> of this tenant.
+                  </div>
+                </div>
+              )}
             </div>
 
-            {/* Loading / error helpers */}
-            {isLoadingTenantPerms && (
-              <div className="mt-3 text-xs text-slate-500">Loading tenant permissions…</div>
-            )}
+            <nav className="space-y-2">
+              {/* Dashboard */}
+              <NavLink
+                to={`/t/${tenantSlug}`}
+                className={({ isActive }) => cx(linkBase, isActive ? linkActive : linkIdle)}
+                end
+              >
+                Dashboard
+              </NavLink>
 
-            {tenantPermsError && (
-              <div className="mt-3 rounded-lg border bg-rose-50 p-3 text-xs text-rose-700">
-                Failed to load tenant permissions.
-                <div className="mt-1 text-rose-700/90">
-                  Check: <span className="font-medium">GET /api/t/:tenantSlug/me</span>
+              {/* Projects */}
+              <NavLink
+                to={`/t/${tenantSlug}/projects`}
+                className={({ isActive }) => cx(linkBase, isActive ? linkActive : linkIdle)}
+              >
+                Projects
+              </NavLink>
+
+              {/* Tenant Admin only links */}
+              {isTenantAdmin && (
+                <>
+                  <NavLink
+                    to={`/t/${tenantSlug}/members`}
+                    className={({ isActive }) => cx(linkBase, isActive ? linkActive : linkIdle)}
+                  >
+                    Members / Team
+                  </NavLink>
+
+                  <NavLink
+                    to={`/t/${tenantSlug}/invites`}
+                    className={({ isActive }) => cx(linkBase, isActive ? linkActive : linkIdle)}
+                  >
+                    Invite Users
+                  </NavLink>
+
+                  <NavLink
+                    to={`/t/${tenantSlug}/analytics`}
+                    className={({ isActive }) => cx(linkBase, isActive ? linkActive : linkIdle)}
+                  >
+                    Tenant Analytics
+                  </NavLink>
+
+                  <NavLink
+                    to={`/t/${tenantSlug}/settings`}
+                    className={({ isActive }) => cx(linkBase, isActive ? linkActive : linkIdle)}
+                  >
+                    Tenant Settings
+                  </NavLink>
+                </>
+              )}
+
+              {/* Hint box (role not loaded) */}
+              {!activeTenantRole && !isLoadingTenantPerms && !tenantPermsError && (
+                <div className="mt-4 rounded-lg border bg-slate-50 p-3 text-xs text-slate-600">
+                  Tenant role is not loaded yet. Ensure{" "}
+                  <span className="font-medium">/api/t/:tenantSlug/me</span> returns your membership role, and your
+                  client restores a valid session after refresh.
                 </div>
-                <div className="mt-1 text-rose-700/90">
-                  Confirm you are an <span className="font-medium">active member</span> of this tenant.
-                </div>
+              )}
+
+              {/* Switch tenant */}
+              <div className="mt-4 border-t pt-4">
+                <Link to="/select-tenant" className="text-xs text-slate-600 hover:text-slate-900">
+                  Switch tenant
+                </Link>
               </div>
-            )}
-          </div>
+            </nav>
+          </aside>
 
-          <nav className="space-y-2">
-            {/* Dashboard */}
-            <NavLink
-              to={`/t/${tenantSlug}`}
-              className={({ isActive }) => cx(linkBase, isActive ? linkActive : linkIdle)}
-              end
-            >
-              Dashboard
-            </NavLink>
-
-            {/* Projects */}
-            <NavLink
-              to={`/t/${tenantSlug}/projects`}
-              className={({ isActive }) => cx(linkBase, isActive ? linkActive : linkIdle)}
-            >
-              Projects
-            </NavLink>
-
-            {/* ✅ Tenant Admin only links
-                IMPORTANT: do NOT wrap these links with RoleGate,
-                otherwise RoleGate can “trap” the sidebar in a loading screen.
-            */}
-            {isTenantAdmin && (
-              <>
-                <NavLink
-                  to={`/t/${tenantSlug}/members`}
-                  className={({ isActive }) => cx(linkBase, isActive ? linkActive : linkIdle)}
-                >
-                  Members / Team
-                </NavLink>
-
-                <NavLink
-                  to={`/t/${tenantSlug}/invites`}
-                  className={({ isActive }) => cx(linkBase, isActive ? linkActive : linkIdle)}
-                >
-                  Invite Users
-                </NavLink>
-
-                <NavLink
-                  to={`/t/${tenantSlug}/analytics`}
-                  className={({ isActive }) => cx(linkBase, isActive ? linkActive : linkIdle)}
-                >
-                  Tenant Analytics
-                </NavLink>
-
-                <NavLink
-                  to={`/t/${tenantSlug}/settings`}
-                  className={({ isActive }) => cx(linkBase, isActive ? linkActive : linkIdle)}
-                >
-                  Tenant Settings
-                </NavLink>
-              </>
-            )}
-
-            {/* Hint box (role not loaded) */}
-            {!activeTenantRole && !isLoadingTenantPerms && !tenantPermsError && (
-              <div className="mt-4 rounded-lg border bg-slate-50 p-3 text-xs text-slate-600">
-                Tenant role is not loaded yet. Ensure{" "}
-                <span className="font-medium">/api/t/:tenantSlug/me</span> returns your membership role, and your client
-                restores a valid session after refresh.
-              </div>
-            )}
-
-            {/* Switch tenant */}
-            <div className="mt-4 border-t pt-4">
-              <Link to="/select-tenant" className="text-xs text-slate-600 hover:text-slate-900">
-                Switch tenant
-              </Link>
-            </div>
-          </nav>
-        </aside>
-
-        {/* Main content */}
-        <section className="min-w-0">
-          <Outlet />
-        </section>
-      </div>
-    </PageShell>
+          {/* Main content */}
+          <section className="min-w-0">
+            <Outlet />
+          </section>
+        </div>
+      </main>
+    </div>
   );
 }
