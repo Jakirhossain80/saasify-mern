@@ -2,8 +2,12 @@
 import mongoose from "mongoose";
 import { z } from "zod";
 
+/**
+ * Shared helper
+ */
 const objectIdString = z
   .string()
+  .trim()
   .refine((v) => mongoose.isValidObjectId(v), { message: "Invalid ObjectId" });
 
 /**
@@ -22,6 +26,7 @@ export const PlatformCreateTenantBodySchema = z.object({
     .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, "Slug must be lowercase and URL-friendly.")
     .transform((v) => v.toLowerCase()),
 
+  // Keep existing behavior (optional + default "")
   logoUrl: z.string().trim().optional().default(""),
 });
 
@@ -73,3 +78,30 @@ export const PlatformSoftDeleteTenantBodySchema = z
     reason: z.string().trim().max(500).optional(),
   })
   .optional();
+
+/**
+ * Tenant (Tenant Settings module)
+ */
+
+// ✅ Param validation: tenantId must be a valid ObjectId string
+// (Tenant-scoped routes like /api/tenant/:tenantId/settings)
+export const tenantIdParamSchema = z.object({
+  tenantId: objectIdString,
+});
+
+/**
+ * ✅ Tenant Settings Update (tenant-scoped)
+ * Allows only:
+ * - name?: string (min 2)
+ * - logoUrl?: valid URL (optional)
+ * - isArchived?: boolean (optional)
+ *
+ * NOTE: slug is intentionally NOT present => cannot be updated here.
+ */
+export const tenantSettingsUpdateSchema = z
+  .object({
+    name: z.string().trim().min(2).optional(),
+    logoUrl: z.string().trim().url().optional(),
+    isArchived: z.boolean().optional(),
+  })
+  .strict();

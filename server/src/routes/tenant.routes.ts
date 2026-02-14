@@ -31,6 +31,12 @@ import {
 
 import { getTenantAnalytics } from "../controllers/analytics.controller";
 
+// ✅ Phase 8 (4) Tenant Settings handlers (ADD)
+import {
+  getTenantSettingsHandler,
+  patchTenantSettingsHandler,
+} from "../controllers/tenantSettings.controller";
+
 const router = Router();
 
 /* =========================================================
@@ -68,10 +74,10 @@ tenantSlugRouter.get(
 tenantSlugRouter.get("/me", getMyTenantContextHandler);
 
 /* =========================================================
-   2) tenantId-based tenant routes (KEEP existing + ADD Analytics)
+   2) tenantId-based tenant routes (KEEP existing + ADD Settings)
    Base: /api/tenant/:tenantId/...
    MUST USE CHAIN:
-   requireAuth → tenantResolve → requireTenantMembership → requireTenantRole(["tenantAdmin"])
+   requireAuth → tenantResolve → requireTenantMembership
 ========================================================= */
 const tenantIdRouter = Router({ mergeParams: true });
 
@@ -86,9 +92,6 @@ router.use(
 /**
  * ✅ Tenant Analytics Stats (Phase 8 (3)) — tenantAdmin recommended
  * GET /api/tenant/:tenantId/analytics
- *
- * Middleware chain (effective):
- * requireAuth → tenantResolve → requireTenantMembership → requireTenantRole(["tenantAdmin"])
  */
 tenantIdRouter.get(
   "/analytics",
@@ -102,9 +105,6 @@ tenantIdRouter.get(
  * - GET    /api/tenant/:tenantId/members
  * - PATCH  /api/tenant/:tenantId/members/:userId
  * - DELETE /api/tenant/:tenantId/members/:userId
- *
- * Middleware chain (effective):
- * requireAuth → tenantResolve → requireTenantMembership → requireTenantRole(["tenantAdmin"])
  */
 tenantIdRouter.get(
   "/members",
@@ -141,6 +141,27 @@ tenantIdRouter.delete(
   "/invites/:inviteId",
   requireTenantRole(["tenantAdmin"]),
   revokeInviteHandler
+);
+
+/**
+ * ✅ Tenant Settings (Phase 8 (4)) — tenantAdmin only
+ * Endpoints:
+ * - GET   /api/tenant/:tenantId/settings
+ * - PATCH /api/tenant/:tenantId/settings
+ *
+ * Effective chain:
+ * requireAuth → tenantResolve → requireTenantMembership → requireTenantRole(["tenantAdmin"])
+ */
+tenantIdRouter.get(
+  "/settings",
+  requireTenantRole(["tenantAdmin"]),
+  getTenantSettingsHandler
+);
+
+tenantIdRouter.patch(
+  "/settings",
+  requireTenantRole(["tenantAdmin"]),
+  patchTenantSettingsHandler
 );
 
 export default router;

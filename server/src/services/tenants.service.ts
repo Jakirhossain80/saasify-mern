@@ -1,5 +1,5 @@
 // FILE: server/src/services/tenants.service.ts
-import type { Types } from "mongoose";
+import mongoose, { type Types } from "mongoose";
 import type { TenantDoc } from "../models/Tenant";
 import {
   createTenantRepo,
@@ -11,14 +11,39 @@ import {
   setTenantSuspendedRepo,
   softDeleteTenantRepo,
 
-  // new repo funcs (Feature #2)
+  // feature #2 repo funcs
   setTenantArchivedRepo,
   safeDeleteTenantRepo,
+
+  // ✅ tenant-scoped settings repo func (Module 4)
+  updateTenantSettingsRepo,
 } from "../repositories/tenants.repo";
 import { createAuditLog } from "./auditLogs.service";
 
 function normalizeSlug(slug: string) {
   return slug.trim().toLowerCase();
+}
+
+function httpError(status: number, message: string) {
+  const err = new Error(message) as any;
+  err.status = status;
+  return err;
+}
+
+/**
+ * ✅ CRITICAL FIX (final):
+ * Audit logs must NEVER break the main business flow.
+ * If audit log fails (schema mismatch, validation, etc),
+ * we still return success for create/archive/delete actions.
+ */
+async function safeAudit(input: Parameters<typeof createAuditLog>[0]) {
+  try {
+    await createAuditLog(input as any);
+  } catch (err) {
+    // best-effort only — never throw
+    // eslint-disable-next-line no-console
+    console.warn("[audit] failed but ignored:", (err as any)?.message || err);
+  }
 }
 
 /**
@@ -43,7 +68,8 @@ export async function createTenant(input: {
       logoUrl: input.logoUrl ?? "",
     });
 
-    await createAuditLog({
+    // ✅ Do not let audit log failure cause 500
+    await safeAudit({
       scope: "platform",
       action: "tenant.created",
       entity: { type: "Tenant", id: created._id },
@@ -104,7 +130,8 @@ export async function setTenantSuspended(input: {
   });
 
   if (updated) {
-    await createAuditLog({
+    // ✅ never break main flow
+    await safeAudit({
       scope: "platform",
       action: "tenant.status_changed",
       entity: { type: "Tenant", id: updated._id },
@@ -123,7 +150,7 @@ export async function setTenantSuspended(input: {
 }
 
 /**
- * ✅ Used by DELETE /api/platform/tenants/:tenantId (your current flow)
+ * ✅ Used by DELETE /api/platform/tenants/:tenantId/soft
  * This is "soft delete" (sets deletedAt + deletedByUserId, and archives).
  */
 export async function softDeleteTenant(input: {
@@ -136,7 +163,8 @@ export async function softDeleteTenant(input: {
   });
 
   if (updated) {
-    await createAuditLog({
+    // ✅ never break main flow
+    await safeAudit({
       scope: "platform",
       action: "tenant.status_changed",
       entity: { type: "Tenant", id: updated._id },
@@ -183,7 +211,8 @@ export async function setTenantArchived(input: {
 
   if (!updated) return null;
 
-  await createAuditLog({
+  // ✅ never break main flow
+  await safeAudit({
     scope: "platform",
     action: "tenant.status_changed",
     entity: { type: "Tenant", id: updated._id },
@@ -220,7 +249,8 @@ export async function safeDeleteTenant(input: {
   if (!result) return null;
 
   if (result.ok) {
-    await createAuditLog({
+    // ✅ never break main flow
+    await safeAudit({
       scope: "platform",
       action: "tenant.status_changed",
       entity: { type: "Tenant", id: input.tenantId },
@@ -231,4 +261,63 @@ export async function safeDeleteTenant(input: {
   }
 
   return result;
+}
+
+/**
+ * =========================================================
+ * MODULE (4) — TENANT SETTINGS (tenant-scoped)
+ * =========================================================
+ *
+ * ✅ Tenant Settings (GET)
+ * Ensures tenant exists.
+ */
+export async function getTenantSettings(tenantId: string): Promise<TenantDoc> {
+  if (!mongoose.isValidObjectId(tenantId)) throw httpError(400, "Invalid tenantId");
+
+  const tenant = await getTenantByIdRepo(tenantId);
+  if (!tenant) throw httpError(404, "Tenant not found");
+
+  return tenant;
+}
+
+type TenantSettingsUpdate = {
+  name?: string;
+  logoUrl?: string;
+  isArchived?: boolean;
+};
+
+/**
+ * ✅ Tenant Settings (PATCH)
+ * Business rules:
+ * 1) Tenant must exist
+ * 2) If tenant is archived -> reject updates (400) unless request is unarchiving (isArchived=false)
+ * 3) Slug must never be updated (defensive strip)
+ */
+export async function updateTenantSettings(
+  tenantId: string,
+  updates: TenantSettingsUpdate
+): Promise<TenantDoc> {
+  if (!mongoose.isValidObjectId(tenantId)) throw httpError(400, "Invalid tenantId");
+
+  const tenant = await getTenantByIdRepo(tenantId);
+  if (!tenant) throw httpError(404, "Tenant not found");
+
+  const isUnarchivingRequest = updates.isArchived === false;
+
+  // Archived tenant update attempt -> 400 unless unarchiving
+  if (tenant.isArchived && !isUnarchivingRequest) {
+    throw httpError(400, "Tenant is archived. Unarchive first to update settings.");
+  }
+
+  // ✅ Defensive: never allow slug update even if someone tries (schema already blocks it)
+  const { name, logoUrl, isArchived } = updates;
+  const safeUpdates: TenantSettingsUpdate = {};
+  if (typeof name === "string") safeUpdates.name = name;
+  if (typeof logoUrl === "string") safeUpdates.logoUrl = logoUrl;
+  if (typeof isArchived === "boolean") safeUpdates.isArchived = isArchived;
+
+  const updated = await updateTenantSettingsRepo(tenantId, safeUpdates);
+  if (!updated) throw httpError(404, "Tenant not found");
+
+  return updated;
 }

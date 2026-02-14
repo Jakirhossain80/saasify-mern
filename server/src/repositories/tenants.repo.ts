@@ -64,9 +64,21 @@ export async function findTenantBySlugRepo(slug: string): Promise<TenantDoc | nu
   return Tenant.findOne({ slug: slug.trim().toLowerCase(), deletedAt: null }).exec();
 }
 
-export async function getTenantByIdRepo(tenantId: Types.ObjectId): Promise<TenantDoc | null> {
+/**
+ * ✅ Read tenant by id
+ * - Backward compatible with older code that passes Types.ObjectId
+ * - Also supports passing string (newer services/controllers)
+ * - Always respects soft-delete filter: deletedAt: null
+ */
+export async function getTenantByIdRepo(
+  tenantId: Types.ObjectId | string
+): Promise<TenantDoc | null> {
   await connectDB();
-  return Tenant.findOne({ _id: tenantId, deletedAt: null }).exec();
+
+  const _id =
+    typeof tenantId === "string" ? new mongoose.Types.ObjectId(tenantId) : tenantId;
+
+  return Tenant.findOne({ _id, deletedAt: null }).exec();
 }
 
 export async function createTenantRepo(
@@ -151,6 +163,28 @@ export async function softDeleteTenantRepo(input: {
  * NEW FUNCTIONS (ADD)
  * =========================
  */
+
+/**
+ * ✅ Tenant Settings Update (tenant-scoped)
+ * - Uses $set
+ * - Returns updated tenant
+ * - Respects soft-delete filter (deletedAt: null)
+ */
+export async function updateTenantSettingsRepo(
+  tenantId: Types.ObjectId | string,
+  updates: { name?: string; logoUrl?: string; isArchived?: boolean }
+): Promise<TenantDoc | null> {
+  await connectDB();
+
+  const _id =
+    typeof tenantId === "string" ? new mongoose.Types.ObjectId(tenantId) : tenantId;
+
+  return Tenant.findOneAndUpdate(
+    { _id, deletedAt: null },
+    { $set: updates },
+    { new: true, runValidators: true }
+  ).exec();
+}
 
 /**
  * ✅ Archive/Unarchive with metadata (recommended for Feature #2)
