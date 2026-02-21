@@ -19,6 +19,15 @@ export type CreateProjectRepoInput = {
   createdByUserId: Types.ObjectId;
 };
 
+export type UpdateProjectRepoInput = {
+  tenantId: Types.ObjectId;
+  projectId: Types.ObjectId;
+  actorUserId: Types.ObjectId;
+  title?: string;
+  description?: string;
+  status?: ProjectStatus;
+};
+
 function escapeRegex(input: string): string {
   // Prevent regex DoS / accidental special chars
   return input.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
@@ -82,6 +91,46 @@ export async function listProjectsScoped(
     .skip(offset)
     .limit(limit)
     .exec();
+}
+
+/** ✅ ADD: Update project (status/title/description) */
+export async function updateProjectScoped(input: UpdateProjectRepoInput): Promise<ProjectDoc | null> {
+  await connectDB();
+
+  const update: Record<string, unknown> = {
+    updatedByUserId: input.actorUserId,
+  };
+
+  if (typeof input.title === "string") update.title = input.title.trim();
+  if (typeof input.description === "string") update.description = input.description.trim();
+  if (input.status) update.status = input.status;
+
+  return Project.findOneAndUpdate(
+    { _id: input.projectId, tenantId: input.tenantId, deletedAt: null },
+    { $set: update },
+    { new: true }
+  ).exec();
+}
+
+/** ✅ ADD: Soft delete project (keeps record) */
+export async function softDeleteProjectScoped(input: {
+  tenantId: Types.ObjectId;
+  projectId: Types.ObjectId;
+  actorUserId: Types.ObjectId;
+}): Promise<ProjectDoc | null> {
+  await connectDB();
+
+  return Project.findOneAndUpdate(
+    { _id: input.projectId, tenantId: input.tenantId, deletedAt: null },
+    {
+      $set: {
+        deletedAt: new Date(),
+        deletedByUserId: input.actorUserId,
+        updatedByUserId: input.actorUserId,
+      },
+    },
+    { new: true }
+  ).exec();
 }
 
 export function toObjectId(id: string): Types.ObjectId | null {

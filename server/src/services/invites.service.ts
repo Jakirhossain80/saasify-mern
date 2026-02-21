@@ -1,6 +1,7 @@
 // FILE: server/src/services/invites.service.ts
 import crypto from "crypto";
 import type { Types } from "mongoose";
+import { connectDB } from "../db/connect";
 
 import { createAuditLog } from "../repositories/auditLogs.repo";
 import {
@@ -19,7 +20,7 @@ import {
 } from "../repositories/invites.repo";
 
 import type { InviteDoc, TenantRole } from "../models/Invite";
-import { addMembershipIfNotExists } from "./memberships.service";
+import { Membership } from "../models/Membership";
 
 // helper: satisfy exactOptionalPropertyTypes (don't pass undefined props)
 function cleanListOpts(input?: {
@@ -55,17 +56,47 @@ function makeHttpError(input: { statusCode: number; code: string; message: strin
 /**
  * ✅ BEST-EFFORT audit log:
  * If audit log fails, do NOT break the main business flow.
- * This is important because your symptoms show:
- * - Invite created in DB
- * - API returns 500 after that
  */
 async function safeAudit(fn: () => Promise<any>) {
   try {
     await fn();
   } catch (e) {
-    // keep it silent in response, but visible in server logs
     console.error("[auditLog] failed:", e);
   }
+}
+
+/**
+ * ✅ FIX: Ensure membership becomes ACTIVE on invite accept
+ * - If membership exists in invited/pending/removed → set status = active
+ * - If membership does not exist → create it as active
+ * - Always sync role from invite
+ */
+async function ensureActiveMembershipFromInvite(input: {
+  tenantId: Types.ObjectId;
+  userId: Types.ObjectId;
+  role: "tenantAdmin" | "member";
+}) {
+  await connectDB();
+
+  const existing = await Membership.findOne({
+    tenantId: input.tenantId,
+    userId: input.userId,
+  }).exec();
+
+  const membershipCreated = !existing;
+
+  await Membership.findOneAndUpdate(
+    { tenantId: input.tenantId, userId: input.userId },
+    {
+      $set: {
+        role: input.role,
+        status: "active",
+      },
+    },
+    { new: true, upsert: true }
+  ).exec();
+
+  return { membershipCreated };
 }
 
 /**
@@ -158,7 +189,10 @@ export async function revokeTenantInvite(input: {
 }
 
 /**
- * Accept invite (kept for Phase 9+)
+ * ✅ Accept invite
+ * FIXED:
+ * - Accept invite
+ * - Ensure membership becomes ACTIVE (upsert + status active)
  */
 export async function acceptTenantInvite(input: {
   tenantId: Types.ObjectId;
@@ -174,10 +208,16 @@ export async function acceptTenantInvite(input: {
   if (invite.status !== "pending") return null;
   if (invite.expiresAt.getTime() <= Date.now()) return null;
 
-  const updated = await setInviteStatus(input.tenantId, (invite as any)._id, "accepted", input.acceptedByUserId);
+  const updated = await setInviteStatus(
+    input.tenantId,
+    (invite as any)._id,
+    "accepted",
+    input.acceptedByUserId
+  );
   if (!updated) return null;
 
-  const membershipCreated = await addMembershipIfNotExists({
+  // ✅ IMPORTANT FIX: activate membership always
+  const { membershipCreated } = await ensureActiveMembershipFromInvite({
     tenantId: input.tenantId,
     userId: input.acceptedByUserId,
     role: (updated as any).role,

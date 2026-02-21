@@ -13,17 +13,30 @@ export type TenantRole = "tenantAdmin" | "member";
 export function requireTenantRole(allowedRoles: TenantRole[]) {
   return async function requireTenantRoleMiddleware(req: Request, res: Response, next: NextFunction) {
     try {
-      const tenantId = req.tenantId;
-      const userIdStr = req.user?.userId ?? null;
+      const tenantIdRaw: any = (req as any).tenantId;
 
-      if (!tenantId || !userIdStr) {
+      const userIdRaw: any =
+        (req.user as any)?.userId ??
+        (req.user as any)?.id ??
+        (req.user as any)?._id ??
+        null;
+
+      if (!tenantIdRaw || !userIdRaw) {
         return res.status(401).json({ code: "UNAUTHORIZED", message: "Unauthorized" });
       }
 
+      // ✅ Normalize tenantId into ObjectId (IMPORTANT)
+      const tenantIdStr = String(tenantIdRaw);
+      if (!mongoose.isValidObjectId(tenantIdStr)) {
+        return res.status(401).json({ code: "UNAUTHORIZED", message: "Unauthorized" });
+      }
+      const tenantId = new mongoose.Types.ObjectId(tenantIdStr) as Types.ObjectId;
+
+      // ✅ Normalize userId into ObjectId
+      const userIdStr = String(userIdRaw);
       if (!mongoose.isValidObjectId(userIdStr)) {
         return res.status(401).json({ code: "UNAUTHORIZED", message: "Unauthorized" });
       }
-
       const userId = new mongoose.Types.ObjectId(userIdStr) as Types.ObjectId;
 
       const membership = await getActiveMembershipByTenantAndUser({

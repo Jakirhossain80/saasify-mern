@@ -6,6 +6,8 @@ import {
   createTenantProject,
   getTenantProjectById,
   listTenantProjects,
+  updateTenantProject,
+  deleteTenantProject,
 } from "../services/projects.service";
 import { toObjectId } from "../repositories/projects.repo";
 
@@ -20,6 +22,14 @@ const CreateProjectSchema = z.object({
   title: z.string().trim().min(1).max(120),
   description: z.string().trim().max(2000).optional(),
 });
+
+const UpdateProjectSchema = z
+  .object({
+    title: z.string().trim().min(1).max(120).optional(),
+    description: z.string().trim().max(2000).optional(),
+    status: z.enum(["active", "archived"]).optional(),
+  })
+  .refine((v) => Object.keys(v).length > 0, { message: "At least one field is required" });
 
 function requireTenantContext(req: Request): { tenantId: mongoose.Types.ObjectId; tenantSlug: string } {
   // resolveTenant should set these; keep runtime guards for safety.
@@ -157,6 +167,97 @@ export async function createProjectHandler(req: Request, res: Response, next: Ne
     }
     if (err instanceof Error && err.message === "VALIDATION_ERROR") {
       return res.status(400).json({ code: "VALIDATION_ERROR", message: "Invalid input" });
+    }
+    return next(err);
+  }
+}
+
+/**
+ * ✅ PATCH /api/t/:tenantSlug/projects/:projectId
+ * Supports: title, description, status (active/archived)
+ */
+export async function updateProjectHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { tenantId } = requireTenantContext(req);
+    const actorUserId = requireActorUserId(req);
+
+    const projectIdRaw = (req.params?.projectId ?? "").trim();
+    const projectId = toObjectId(projectIdRaw);
+    if (!projectId) {
+      return res.status(400).json({ code: "INVALID_ID", message: "Invalid project id" });
+    }
+
+    const parsed = UpdateProjectSchema.safeParse(req.body);
+    if (!parsed.success) {
+      return res.status(400).json({
+        code: "VALIDATION_ERROR",
+        message: "Invalid input",
+        fieldErrors: parsed.error.flatten().fieldErrors,
+      });
+    }
+
+    const doc = await updateTenantProject({
+      tenantId,
+      projectId,
+      actorUserId,
+      title: parsed.data.title,
+      description: parsed.data.description,
+      status: parsed.data.status,
+    });
+
+    if (!doc) {
+      return res.status(404).json({ code: "NOT_FOUND", message: "Project not found" });
+    }
+
+    return res.status(200).json({
+      project: {
+        id: String(doc._id),
+        tenantId: String(doc.tenantId),
+        title: doc.title,
+        description: doc.description,
+        status: doc.status,
+        createdAt: doc.createdAt,
+        updatedAt: doc.updatedAt,
+      },
+    });
+  } catch (err) {
+    if (err instanceof Error && err.message === "TENANT_CONTEXT_MISSING") {
+      return res.status(404).json({ code: "TENANT_NOT_FOUND", message: "Tenant not found" });
+    }
+    if (err instanceof Error && err.message === "UNAUTHORIZED") {
+      return res.status(401).json({ code: "UNAUTHORIZED", message: "Unauthorized" });
+    }
+    return next(err);
+  }
+}
+
+/**
+ * ✅ DELETE /api/t/:tenantSlug/projects/:projectId
+ * Soft deletes project (sets deletedAt/deletedByUserId)
+ */
+export async function deleteProjectHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const { tenantId } = requireTenantContext(req);
+    const actorUserId = requireActorUserId(req);
+
+    const projectIdRaw = (req.params?.projectId ?? "").trim();
+    const projectId = toObjectId(projectIdRaw);
+    if (!projectId) {
+      return res.status(400).json({ code: "INVALID_ID", message: "Invalid project id" });
+    }
+
+    const doc = await deleteTenantProject({ tenantId, projectId, actorUserId });
+    if (!doc) {
+      return res.status(404).json({ code: "NOT_FOUND", message: "Project not found" });
+    }
+
+    return res.status(200).json({ ok: true });
+  } catch (err) {
+    if (err instanceof Error && err.message === "TENANT_CONTEXT_MISSING") {
+      return res.status(404).json({ code: "TENANT_NOT_FOUND", message: "Tenant not found" });
+    }
+    if (err instanceof Error && err.message === "UNAUTHORIZED") {
+      return res.status(401).json({ code: "UNAUTHORIZED", message: "Unauthorized" });
     }
     return next(err);
   }

@@ -2,7 +2,15 @@
 import mongoose, { Schema, type InferSchemaType, type Model } from "mongoose";
 
 export type MembershipRole = "tenantAdmin" | "member";
-export type MembershipStatus = "active" | "removed";
+
+/**
+ * ✅ IMPORTANT:
+ * We must support invite lifecycle:
+ * - invited: invite exists / accepted not completed yet (blocked from tenant access)
+ * - active: user can access tenant
+ * - removed: user removed from tenant
+ */
+export type MembershipStatus = "invited" | "active" | "removed";
 
 const MembershipSchema = new Schema(
   {
@@ -27,7 +35,8 @@ const MembershipSchema = new Schema(
     },
     status: {
       type: String,
-      enum: ["active", "removed"],
+      // ✅ add "invited"
+      enum: ["invited", "active", "removed"],
       required: true,
       index: true,
       default: "active",

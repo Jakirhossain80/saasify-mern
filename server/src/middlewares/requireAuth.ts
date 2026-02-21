@@ -8,7 +8,8 @@ import { User } from "../models/User";
  * Verifies access token from:
  * Authorization: Bearer <token>
  *
- * On success -> req.user = { userId, email, platformRole }
+ * On success -> req.user = { userId, id, _id, email, platformRole }
+ * (userId is canonical; id/_id are backward-compatible aliases)
  */
 export async function requireAuth(req: Request, res: Response, next: NextFunction) {
   try {
@@ -41,8 +42,11 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
       (user.platformRole ?? "").toString().trim() ||
       (user.role ?? "").toString().trim();
 
+    // ✅ IMPORTANT: set all aliases (userId is canonical)
     req.user = {
-      userId,
+      userId,           // ✅ canonical
+      id: userId,       // ✅ legacy alias
+      _id: userId,      // ✅ legacy alias
       email: user.email,
       platformRole: platformRole as "user" | "platformAdmin",
     };

@@ -1,6 +1,7 @@
 // FILE: server/src/services/memberships.service.ts
 import type { Types } from "mongoose";
 import type { MembershipDoc, MembershipRole } from "../models/Membership";
+import { Membership } from "../models/Membership"; // ✅ ADD (safe minimal)
 import { Tenant } from "../models/Tenant";
 import { User } from "../models/User";
 import { AuditLog } from "../models/AuditLog";
@@ -52,7 +53,9 @@ export async function getMembership(
 
 /**
  * Helper used by invites flow.
- * Returns true only when a new membership was created.
+ * - If membership doesn't exist: create it.
+ * - If membership exists but not active (removed/legacy): re-activate it.
+ * Returns true only when created OR re-activated.
  */
 export async function addMembershipIfNotExists(input: {
   tenantId: Types.ObjectId;
@@ -60,9 +63,30 @@ export async function addMembershipIfNotExists(input: {
   role: MembershipRole;
   status?: MembershipStatus;
 }): Promise<boolean> {
-  const existing = await findMembershipByTenantAndUser(input.tenantId, input.userId);
-  if (existing) return false;
+  const existing: any = await findMembershipByTenantAndUser(input.tenantId, input.userId);
 
+  // ✅ If already exists and is active, nothing to do
+  if (existing && String(existing.status) === "active") {
+    return false;
+  }
+
+  // ✅ If exists but not active (removed/legacy pending/invited), reactivate it
+  if (existing) {
+    await Membership.findOneAndUpdate(
+      { tenantId: input.tenantId, userId: input.userId },
+      {
+        $set: {
+          role: input.role,
+          status: input.status ?? "active",
+        },
+      },
+      { new: true }
+    ).exec();
+
+    return true;
+  }
+
+  // ✅ Otherwise create fresh membership
   await createMembershipRepo({
     tenantId: input.tenantId,
     userId: input.userId,
@@ -138,19 +162,11 @@ function makeError(status: number, message: string) {
   return err;
 }
 
-/**
- * (A) List members of a tenant
- * Response shape required: { items: [...] }
- */
 export async function listTenantMembersService(tenantId: string) {
   const items = await listMembersByTenantRepo(tenantId);
   return { items };
 }
 
-/**
- * (B) Update member role (tenantAdmin ↔ member)
- * Safety: cannot demote the last active tenantAdmin
- */
 export async function updateTenantMemberRoleService(opts: {
   tenantId: string;
   targetUserId: string;
@@ -162,7 +178,6 @@ export async function updateTenantMemberRoleService(opts: {
   const targetMembership = await findActiveMembershipRepo(tenantId, targetUserId);
   if (!targetMembership) throw makeError(404, "Membership not found (active).");
 
-  // If target is tenantAdmin and we are demoting -> last admin protection
   const isDemotingAdmin = targetMembership.role === "tenantAdmin" && role === "member";
   if (isDemotingAdmin) {
     const adminsCount = await countActiveTenantAdminsRepo(tenantId);
@@ -171,7 +186,6 @@ export async function updateTenantMemberRoleService(opts: {
     }
   }
 
-  // Safety: if actor is trying to demote self while last admin
   if (actorUserId && actorUserId === targetUserId && isDemotingAdmin) {
     const adminsCount = await countActiveTenantAdminsRepo(tenantId);
     if (adminsCount <= 1) {
@@ -185,10 +199,6 @@ export async function updateTenantMemberRoleService(opts: {
   return { membership: updated };
 }
 
-/**
- * (C) Remove member (soft remove => status="removed")
- * Safety: cannot remove the last active tenantAdmin
- */
 export async function removeTenantMemberService(opts: {
   tenantId: string;
   targetUserId: string;
@@ -207,7 +217,6 @@ export async function removeTenantMemberService(opts: {
     }
   }
 
-  // Safety: if actor is removing self and is last admin
   if (actorUserId && actorUserId === targetUserId && removingAdmin) {
     const adminsCount = await countActiveTenantAdminsRepo(tenantId);
     if (adminsCount <= 1) {

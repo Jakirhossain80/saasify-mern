@@ -1,7 +1,14 @@
 // FILE: server/src/services/projects.service.ts
 import type { Types } from "mongoose";
 import type { ProjectDoc } from "../models/Project";
-import { createProjectScoped, findProjectByIdScoped, listProjectsScoped } from "../repositories/projects.repo";
+import {
+  createProjectScoped,
+  findProjectByIdScoped,
+  listProjectsScoped,
+  updateProjectScoped,
+  softDeleteProjectScoped,
+  type ProjectStatus,
+} from "../repositories/projects.repo";
 
 export type ListTenantProjectsInput = {
   tenantId: Types.ObjectId;
@@ -25,7 +32,9 @@ export type GetTenantProjectByIdInput = {
   projectId: Types.ObjectId;
 };
 
-export async function getTenantProjectById(input: GetTenantProjectByIdInput): Promise<ProjectDoc | null> {
+export async function getTenantProjectById(
+  input: GetTenantProjectByIdInput
+): Promise<ProjectDoc | null> {
   // ✅ If the project exists in another tenant, repo returns null → controller returns 404 (no leak)
   return findProjectByIdScoped(input.tenantId, input.projectId);
 }
@@ -49,5 +58,37 @@ export async function createTenantProject(input: CreateTenantProjectInput): Prom
     title,
     description: (input.description ?? "").trim(),
     createdByUserId: input.actorUserId,
+  });
+}
+
+/** ✅ ADD: Update project (title/description/status for archive/unarchive) */
+export async function updateTenantProject(input: {
+  tenantId: Types.ObjectId;
+  projectId: Types.ObjectId;
+  actorUserId: Types.ObjectId;
+  title?: string;
+  description?: string;
+  status?: ProjectStatus;
+}): Promise<ProjectDoc | null> {
+  return updateProjectScoped({
+    tenantId: input.tenantId,
+    projectId: input.projectId,
+    actorUserId: input.actorUserId,
+    title: input.title,
+    description: input.description,
+    status: input.status,
+  });
+}
+
+/** ✅ ADD: Delete project (soft delete) */
+export async function deleteTenantProject(input: {
+  tenantId: Types.ObjectId;
+  projectId: Types.ObjectId;
+  actorUserId: Types.ObjectId;
+}): Promise<ProjectDoc | null> {
+  return softDeleteProjectScoped({
+    tenantId: input.tenantId,
+    projectId: input.projectId,
+    actorUserId: input.actorUserId,
   });
 }

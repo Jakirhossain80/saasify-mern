@@ -11,6 +11,10 @@ import {
   createProjectHandler,
   getProjectHandler,
   listProjectsHandler,
+  // ✅ ADD (for archive/unarchive + title/description update)
+  updateProjectHandler,
+  // ✅ ADD (soft delete)
+  deleteProjectHandler,
 } from "../controllers/projects.controller";
 
 import {
@@ -57,10 +61,25 @@ router.use(
 // Projects
 tenantSlugRouter.get("/projects", listProjectsHandler);
 tenantSlugRouter.get("/projects/:projectId", getProjectHandler);
+
 tenantSlugRouter.post(
   "/projects",
   requireTenantRole(["tenantAdmin"]),
   createProjectHandler
+);
+
+// ✅ ADD: Update (archive/unarchive + title/description)
+tenantSlugRouter.patch(
+  "/projects/:projectId",
+  requireTenantRole(["tenantAdmin"]),
+  updateProjectHandler
+);
+
+// ✅ ADD: Delete (soft delete)
+tenantSlugRouter.delete(
+  "/projects/:projectId",
+  requireTenantRole(["tenantAdmin"]),
+  deleteProjectHandler
 );
 
 // Members (legacy Phase 5 minimal)
@@ -164,4 +183,4 @@ tenantIdRouter.patch(
   patchTenantSettingsHandler
 );
 
-export default router;
+export default router; 
