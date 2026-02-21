@@ -10,9 +10,11 @@ import { http } from "../../api/http";
  * SelectTenant (slug-based)
  * - Keeps your existing UI + manual slug entry
  * - PRODUCTION fix:
- *   After user enters slug, we verify access + fetch role from backend:
- *   GET /api/t/:tenantSlug/me
- *   (your http client likely already has baseURL=/api)
+ *   ✅ Do NOT auto-redirect away from /select-tenant even if activeTenantSlug exists.
+ *   Instead show a "Continue to current tenant" button so user can switch tenant anytime.
+ *
+ * After user enters slug, we verify access + fetch role from backend:
+ * GET /api/t/:tenantSlug/me
  *
  * Backend must run:
  * requireAuth → resolveTenant → requireTenantMembership → (this controller)
@@ -39,12 +41,12 @@ export default function SelectTenant() {
     }
   }, [user?.platformRole, nav]);
 
-  // If already selected, go straight to dashboard
-  useEffect(() => {
-    if (activeTenantSlug) {
-      nav(`/t/${activeTenantSlug}/dashboard`, { replace: true });
-    }
-  }, [activeTenantSlug, nav]);
+  // ✅ IMPORTANT FIX:
+  // ❌ Removed the old auto-redirect:
+  // useEffect(() => { if (activeTenantSlug) nav(`/t/${activeTenantSlug}/dashboard`, { replace: true }); }, ...)
+  //
+  // ✅ Now /select-tenant stays open as a "Switch tenant" page.
+  // If activeTenantSlug exists, user can manually click "Continue to current tenant".
 
   const canContinue = useMemo(() => {
     // If you require Authorization header, accessToken must exist
@@ -124,13 +126,38 @@ export default function SelectTenant() {
     }
   };
 
+  const onContinueCurrentTenant = () => {
+    if (!activeTenantSlug) return;
+    nav(`/t/${activeTenantSlug}/dashboard`);
+  };
+
   return (
     <div className="mx-auto max-w-xl py-10">
       <div className="rounded-2xl border bg-white p-6 shadow-sm">
         <div className="space-y-1">
           <h1 className="text-xl font-semibold">Select a tenant</h1>
-          <p className="text-sm text-slate-600">Enter your tenant slug to open your tenant dashboard.</p>
+          <p className="text-sm text-slate-600">
+            Enter your tenant slug to open your tenant dashboard.
+          </p>
         </div>
+
+        {/* ✅ NEW: If a tenant is already selected, allow user to continue without redirecting */}
+        {activeTenantSlug ? (
+          <div className="mt-5 flex flex-col gap-2 rounded-xl border bg-slate-50 p-4">
+            <div className="text-xs text-slate-600">
+              Current tenant:{" "}
+              <span className="font-semibold text-slate-900">{activeTenantSlug}</span>
+            </div>
+
+            <button
+              type="button"
+              onClick={onContinueCurrentTenant}
+              className="inline-flex items-center justify-center rounded-lg border bg-white px-3 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
+            >
+              Continue to current tenant
+            </button>
+          </div>
+        ) : null}
 
         <div className="mt-6 space-y-2">
           <label className="text-sm font-medium">Tenant slug</label>
