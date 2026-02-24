@@ -6,7 +6,7 @@ import { useAuthStore, type TenantRole } from "../../store/auth.store";
 type Props = {
   children: ReactNode;
 
-  // ✅ existing platform role gating
+  // ✅ existing platform role gating necessary items
   allowPlatformRoles?: Array<"platformAdmin" | "user">;
 
   // ✅ NEW: tenant roles gating
