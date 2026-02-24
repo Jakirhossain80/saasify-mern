@@ -11,17 +11,13 @@ import {
   createProjectHandler,
   getProjectHandler,
   listProjectsHandler,
-  // ✅ ADD (for archive/unarchive + title/description update)
   updateProjectHandler,
-  // ✅ ADD (soft delete)
   deleteProjectHandler,
 } from "../controllers/projects.controller";
 
 import {
-  // ✅ existing handlers (keep)
   listTenantMembersHandler,
   getMyTenantContextHandler,
-  // ✅ Phase 8 (2) new handlers (add)
   listTenantMembers,
   updateTenantMemberRole,
   removeTenantMember,
@@ -31,11 +27,11 @@ import {
   createInviteHandler,
   listInvitesHandler,
   revokeInviteHandler,
+  acceptInviteHandler, // ✅ merged here
 } from "../controllers/invites.controller";
 
 import { getTenantAnalytics } from "../controllers/analytics.controller";
 
-// ✅ Phase 8 (4) Tenant Settings handlers (ADD)
 import {
   getTenantSettingsHandler,
   patchTenantSettingsHandler,
@@ -43,8 +39,19 @@ import {
 
 const router = Router();
 
+/**
+ * ✅ Accept invite (logged-in user, NOT yet a tenant member)
+ * MUST be before the protected /t/:tenantSlug router.
+ */
+router.post(
+  "/t/:tenantSlug/invites/accept",
+  requireAuth,
+  resolveTenant,
+  acceptInviteHandler
+);
+
 /* =========================================================
-   1) EXISTING slug-based tenant routes (KEEP AS-IS)
+   1) Slug-based tenant routes (protected)
    Base: /api/t/:tenantSlug/...
    Chain: requireAuth → resolveTenant → requireTenantMembership
 ========================================================= */
@@ -62,41 +69,22 @@ router.use(
 tenantSlugRouter.get("/projects", listProjectsHandler);
 tenantSlugRouter.get("/projects/:projectId", getProjectHandler);
 
-tenantSlugRouter.post(
-  "/projects",
-  requireTenantRole(["tenantAdmin"]),
-  createProjectHandler
-);
+tenantSlugRouter.post("/projects", requireTenantRole(["tenantAdmin"]), createProjectHandler);
 
-// ✅ ADD: Update (archive/unarchive + title/description)
-tenantSlugRouter.patch(
-  "/projects/:projectId",
-  requireTenantRole(["tenantAdmin"]),
-  updateProjectHandler
-);
+tenantSlugRouter.patch("/projects/:projectId", requireTenantRole(["tenantAdmin"]), updateProjectHandler);
 
-// ✅ ADD: Delete (soft delete)
-tenantSlugRouter.delete(
-  "/projects/:projectId",
-  requireTenantRole(["tenantAdmin"]),
-  deleteProjectHandler
-);
+tenantSlugRouter.delete("/projects/:projectId", requireTenantRole(["tenantAdmin"]), deleteProjectHandler);
 
 // Members (legacy Phase 5 minimal)
-tenantSlugRouter.get(
-  "/members",
-  requireTenantRole(["tenantAdmin"]),
-  listTenantMembersHandler
-);
+tenantSlugRouter.get("/members", requireTenantRole(["tenantAdmin"]), listTenantMembersHandler);
 
 // Tenant context (role)
 tenantSlugRouter.get("/me", getMyTenantContextHandler);
 
 /* =========================================================
-   2) tenantId-based tenant routes (KEEP existing + ADD Settings)
+   2) tenantId-based tenant routes (protected)
    Base: /api/tenant/:tenantId/...
-   MUST USE CHAIN:
-   requireAuth → tenantResolve → requireTenantMembership
+   Chain: requireAuth → tenantResolve → requireTenantMembership
 ========================================================= */
 const tenantIdRouter = Router({ mergeParams: true });
 
@@ -108,79 +96,22 @@ router.use(
   tenantIdRouter
 );
 
-/**
- * ✅ Tenant Analytics Stats (Phase 8 (3)) — tenantAdmin recommended
- * GET /api/tenant/:tenantId/analytics
- */
-tenantIdRouter.get(
-  "/analytics",
-  requireTenantRole(["tenantAdmin"]),
-  getTenantAnalytics
-);
+// Analytics
+tenantIdRouter.get("/analytics", requireTenantRole(["tenantAdmin"]), getTenantAnalytics);
 
-/**
- * ✅ Members Management (Phase 8 (2)) — tenantAdmin only
- * Endpoints:
- * - GET    /api/tenant/:tenantId/members
- * - PATCH  /api/tenant/:tenantId/members/:userId
- * - DELETE /api/tenant/:tenantId/members/:userId
- */
-tenantIdRouter.get(
-  "/members",
-  requireTenantRole(["tenantAdmin"]),
-  listTenantMembers
-);
+// Members Management
+tenantIdRouter.get("/members", requireTenantRole(["tenantAdmin"]), listTenantMembers);
+tenantIdRouter.patch("/members/:userId", requireTenantRole(["tenantAdmin"]), updateTenantMemberRole);
+tenantIdRouter.delete("/members/:userId", requireTenantRole(["tenantAdmin"]), removeTenantMember);
 
-tenantIdRouter.patch(
-  "/members/:userId",
-  requireTenantRole(["tenantAdmin"]),
-  updateTenantMemberRole
-);
+// Invites
+tenantIdRouter.post("/invites", requireTenantRole(["tenantAdmin"]), createInviteHandler);
+tenantIdRouter.get("/invites", requireTenantRole(["tenantAdmin"]), listInvitesHandler);
+tenantIdRouter.delete("/invites/:inviteId", requireTenantRole(["tenantAdmin"]), revokeInviteHandler);
 
-tenantIdRouter.delete(
-  "/members/:userId",
-  requireTenantRole(["tenantAdmin"]),
-  removeTenantMember
-);
+// Settings
+tenantIdRouter.get("/settings", requireTenantRole(["tenantAdmin"]), getTenantSettingsHandler);
+tenantIdRouter.patch("/settings", requireTenantRole(["tenantAdmin"]), patchTenantSettingsHandler);
 
-// Invites (tenantAdmin only) — KEEP AS-IS
-tenantIdRouter.post(
-  "/invites",
-  requireTenantRole(["tenantAdmin"]),
-  createInviteHandler
-);
+export default router;
 
-tenantIdRouter.get(
-  "/invites",
-  requireTenantRole(["tenantAdmin"]),
-  listInvitesHandler
-);
-
-tenantIdRouter.delete(
-  "/invites/:inviteId",
-  requireTenantRole(["tenantAdmin"]),
-  revokeInviteHandler
-);
-
-/**
- * ✅ Tenant Settings (Phase 8 (4)) — tenantAdmin only
- * Endpoints:
- * - GET   /api/tenant/:tenantId/settings
- * - PATCH /api/tenant/:tenantId/settings
- *
- * Effective chain:
- * requireAuth → tenantResolve → requireTenantMembership → requireTenantRole(["tenantAdmin"])
- */
-tenantIdRouter.get(
-  "/settings",
-  requireTenantRole(["tenantAdmin"]),
-  getTenantSettingsHandler
-);
-
-tenantIdRouter.patch(
-  "/settings",
-  requireTenantRole(["tenantAdmin"]),
-  patchTenantSettingsHandler
-);
-
-export default router; 

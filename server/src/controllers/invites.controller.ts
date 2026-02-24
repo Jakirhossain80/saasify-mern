@@ -11,6 +11,7 @@ import {
   listInvitesService,
   revokeInviteService,
 } from "../services/invites.service";
+import { acceptInviteService } from "../services/invites.service";
 
 function getActorUserId(req: Request): Types.ObjectId | null {
   const raw =
@@ -149,3 +150,51 @@ export async function revokeInviteHandler(req: Request, res: Response, next: Nex
     return next(err);
   }
 }
+
+
+/**
+ * POST /api/t/:tenantSlug/invites/accept
+ * body: { token }
+ *
+ * NOTE:
+ * This route must NOT use requireTenantMembership,
+ * because the user is NOT a member yet.
+ */
+export async function acceptInviteHandler(req: Request, res: Response, next: NextFunction) {
+  try {
+    const actorUserId = getActorUserId(req);
+    if (!actorUserId) {
+      return res.status(401).json({ code: "UNAUTHORIZED", message: "Unauthorized" });
+    }
+
+    const tenantId = req.tenantId as Types.ObjectId | undefined;
+    if (!tenantId) {
+      return res.status(404).json({ code: "TENANT_NOT_FOUND", message: "Tenant not found" });
+    }
+
+    const token = String(req.body?.token ?? "").trim();
+    if (!token) {
+      return res.status(400).json({
+        code: "VALIDATION_ERROR",
+        message: "token is required",
+      });
+    }
+
+    const result = await acceptInviteService({
+      tenantId,
+      token,
+      acceptedByUserId: actorUserId,
+    });
+
+    return res.status(200).json(result);
+  } catch (err: any) {
+    if (err?.statusCode) {
+      return res.status(err.statusCode).json({
+        code: err.code ?? "ERROR",
+        message: err.message ?? "Something went wrong",
+      });
+    }
+    return next(err);
+  }
+}
+

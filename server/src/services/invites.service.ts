@@ -5,15 +5,12 @@ import { connectDB } from "../db/connect";
 
 import { createAuditLog } from "../repositories/auditLogs.repo";
 import {
-  // ✅ existing (kept)
   createInvite,
   expireOldInvites,
   hashToken,
   listInvitesByTenant,
   setInviteStatus,
   findInviteByTokenHash,
-
-  // ✅ Phase 8 helpers (already in your merged invites.repo.ts)
   findPendingInviteByEmailRepo,
   listInvitesByTenantRepo,
   revokeInviteRepo,
@@ -21,6 +18,7 @@ import {
 
 import type { InviteDoc, TenantRole } from "../models/Invite";
 import { Membership } from "../models/Membership";
+import { User } from "../models/User"; // ✅ ADD (for email match safety)
 
 // helper: satisfy exactOptionalPropertyTypes (don't pass undefined props)
 function cleanListOpts(input?: {
@@ -67,9 +65,6 @@ async function safeAudit(fn: () => Promise<any>) {
 
 /**
  * ✅ FIX: Ensure membership becomes ACTIVE on invite accept
- * - If membership exists in invited/pending/removed → set status = active
- * - If membership does not exist → create it as active
- * - Always sync role from invite
  */
 async function ensureActiveMembershipFromInvite(input: {
   tenantId: Types.ObjectId;
@@ -85,7 +80,7 @@ async function ensureActiveMembershipFromInvite(input: {
 
   const membershipCreated = !existing;
 
-  await Membership.findOneAndUpdate(
+  const updatedMembership = await Membership.findOneAndUpdate(
     { tenantId: input.tenantId, userId: input.userId },
     {
       $set: {
@@ -96,13 +91,19 @@ async function ensureActiveMembershipFromInvite(input: {
     { new: true, upsert: true }
   ).exec();
 
-  return { membershipCreated };
+  if (!updatedMembership) {
+    throw makeHttpError({
+      statusCode: 500,
+      code: "MEMBERSHIP_UPSERT_FAILED",
+      message: "Failed to create/activate membership.",
+    });
+  }
+
+  return { membershipCreated, membership: updatedMembership };
 }
 
 /**
- * Create a tenant invite (secure: stores tokenHash only)
- * - Adds a duplicate pending invite guard
- * - Default expiry: 7 days (168 hours)
+ * Create a tenant invite
  */
 export async function createTenantInvite(input: {
   tenantId: Types.ObjectId;
@@ -111,12 +112,10 @@ export async function createTenantInvite(input: {
   invitedByUserId: Types.ObjectId;
   expiresInHours?: number;
 }): Promise<{ invite: InviteDoc; rawToken: string }> {
-  // expire old invites first
   await expireOldInvites();
 
   const email = input.email.trim().toLowerCase();
 
-  // prevent duplicate pending invites for same tenant + email
   const exists = await findPendingInviteByEmailRepo({ tenantId: input.tenantId, email });
   if (exists) {
     throw makeHttpError({
@@ -140,7 +139,6 @@ export async function createTenantInvite(input: {
     invitedByUserId: input.invitedByUserId,
   });
 
-  // ✅ best-effort audit
   await safeAudit(() =>
     createAuditLog({
       scope: "tenant",
@@ -191,8 +189,8 @@ export async function revokeTenantInvite(input: {
 /**
  * ✅ Accept invite
  * FIXED:
- * - Accept invite
- * - Ensure membership becomes ACTIVE (upsert + status active)
+ * - Validate invite email matches logged-in user's email
+ * - Ensure membership becomes ACTIVE
  */
 export async function acceptTenantInvite(input: {
   tenantId: Types.ObjectId;
@@ -208,6 +206,21 @@ export async function acceptTenantInvite(input: {
   if (invite.status !== "pending") return null;
   if (invite.expiresAt.getTime() <= Date.now()) return null;
 
+  // ✅ IMPORTANT SAFETY: only the invited email can accept
+  const user = await User.findById(input.acceptedByUserId).select("email").lean();
+  if (!user?.email) return null;
+
+  const loggedEmail = String(user.email).trim().toLowerCase();
+  const invitedEmail = String((invite as any).email).trim().toLowerCase();
+
+  if (loggedEmail !== invitedEmail) {
+    throw makeHttpError({
+      statusCode: 403,
+      code: "INVITE_EMAIL_MISMATCH",
+      message: "This invite was issued for a different email.",
+    });
+  }
+
   const updated = await setInviteStatus(
     input.tenantId,
     (invite as any)._id,
@@ -216,7 +229,6 @@ export async function acceptTenantInvite(input: {
   );
   if (!updated) return null;
 
-  // ✅ IMPORTANT FIX: activate membership always
   const { membershipCreated } = await ensureActiveMembershipFromInvite({
     tenantId: input.tenantId,
     userId: input.acceptedByUserId,
@@ -238,9 +250,7 @@ export async function acceptTenantInvite(input: {
 }
 
 /**
- * ============================================================================
- * ✅ PHASE 8 SERVICES (controller friendly)
- * ============================================================================
+ * PHASE 8 SERVICES (controller friendly)
  */
 
 export async function createInviteService(input: {
@@ -266,7 +276,7 @@ export async function createInviteService(input: {
       email: (invite as any).email,
       role: (invite as any).role,
       status: (invite as any).status,
-      token: rawToken, // DB stores tokenHash only
+      token: rawToken,
       expiresAt: (invite as any).expiresAt,
       invitedByUserId: String((invite as any).invitedByUserId),
       createdAt: (invite as any).createdAt,
@@ -312,7 +322,6 @@ export async function revokeInviteService(input: {
     });
   }
 
-  // ✅ best-effort audit
   await safeAudit(() =>
     createAuditLog({
       scope: "tenant",
@@ -328,5 +337,31 @@ export async function revokeInviteService(input: {
     ok: true,
     inviteId: String((updated as any)._id),
     status: (updated as any).status as "revoked",
+  };
+}
+
+export async function acceptInviteService(input: {
+  tenantId: Types.ObjectId;
+  token: string;
+  acceptedByUserId: Types.ObjectId;
+}) {
+  const result = await acceptTenantInvite({
+    tenantId: input.tenantId,
+    rawToken: input.token,
+    acceptedByUserId: input.acceptedByUserId,
+  });
+
+  if (!result) {
+    throw makeHttpError({
+      statusCode: 400,
+      code: "INVALID_INVITE",
+      message: "Invite is invalid / expired / already used.",
+    });
+  }
+
+  return {
+    ok: true,
+    role: (result.invite as any).role as "tenantAdmin" | "member",
+    membershipCreated: result.membershipCreated,
   };
 }
