@@ -1,4 +1,4 @@
-// FILE: client/src/pages/tenant/SelectTenant.tsx
+// FILE: client/src/pages/platform/SelectTenant.tsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
@@ -21,6 +21,29 @@ import { http } from "../../api/http";
  * returns:
  * { tenant: { id, slug }, role: "tenantAdmin" | "member" }
  */
+
+function getErrorMessage(err: unknown): { code?: string; message: string } {
+  if (typeof err === "object" && err !== null) {
+    const e = err as {
+      message?: unknown;
+      response?: { data?: { code?: unknown; message?: unknown } };
+    };
+
+    const codeRaw = e.response?.data?.code;
+    const msgRaw = e.response?.data?.message;
+
+    const code = typeof codeRaw === "string" ? codeRaw : undefined;
+    const message =
+      (typeof msgRaw === "string" && msgRaw.trim()) ||
+      (typeof e.message === "string" && e.message.trim()) ||
+      "Could not access this tenant. Check slug and membership.";
+
+    return { code, message };
+  }
+
+  return { message: "Could not access this tenant. Check slug and membership." };
+}
+
 export default function SelectTenant() {
   const nav = useNavigate();
 
@@ -109,13 +132,12 @@ export default function SelectTenant() {
       // ✅ 4) go to tenant dashboard
       nav(`/t/${ctx.tenant.slug}/dashboard`);
       toast.success(`Opened tenant: ${ctx.tenant.slug} (${ctx.role})`);
-    } catch (err: any) {
-      const code = err?.response?.data?.code;
-      const msg = err?.response?.data?.message || err?.message;
+    } catch (err: unknown) {
+      const parsed = getErrorMessage(err);
 
-      if (code === "TENANT_NOT_FOUND") toast.error("Tenant not found. Check the slug.");
-      else if (code === "FORBIDDEN") toast.error("You do not have access to this tenant.");
-      else toast.error(msg || "Could not access this tenant. Check slug and membership.");
+      if (parsed.code === "TENANT_NOT_FOUND") toast.error("Tenant not found. Check the slug.");
+      else if (parsed.code === "FORBIDDEN") toast.error("You do not have access to this tenant.");
+      else toast.error(parsed.message);
 
       // keep store clean
       setActiveTenantSlug(null);
@@ -132,62 +154,114 @@ export default function SelectTenant() {
   };
 
   return (
-    <div className="mx-auto max-w-xl py-10">
-      <div className="rounded-2xl border bg-white p-6 shadow-sm">
-        <div className="space-y-1">
-          <h1 className="text-xl font-semibold">Select a tenant</h1>
-          <p className="text-sm text-slate-600">
-            Enter your tenant slug to open your tenant dashboard.
-          </p>
-        </div>
+    <div className="min-h-screen bg-slate-50 p-4">
+      <main className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-md items-center justify-center">
+        <div className="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <header className="p-8 pb-0 text-center">
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+              Select a tenant
+            </h1>
+            <p className="mt-2 text-sm text-slate-600">
+              Enter your tenant slug to open your tenant dashboard.
+            </p>
+          </header>
 
-        {/* ✅ NEW: If a tenant is already selected, allow user to continue without redirecting */}
-        {activeTenantSlug ? (
-          <div className="mt-5 flex flex-col gap-2 rounded-xl border bg-slate-50 p-4">
-            <div className="text-xs text-slate-600">
-              Current tenant:{" "}
-              <span className="font-semibold text-slate-900">{activeTenantSlug}</span>
+          <div className="space-y-6 p-8">
+            {/* ✅ NEW: If a tenant is already selected, allow user to continue without redirecting */}
+            {activeTenantSlug ? (
+              <div className="space-y-3">
+                <div className="rounded-r-md border-l-4 border-blue-600 bg-blue-50 p-4">
+                  <div className="flex items-center">
+                    <svg
+                      className="mr-3 h-5 w-5 text-blue-600"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M5.121 17.804A13.937 13.937 0 0112 16c2.5 0 4.847.655 6.879 1.804M15 10a3 3 0 11-6 0 3 3 0 016 0zm6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                      />
+                    </svg>
+                    <p className="text-sm font-medium text-blue-900">
+                      Current tenant:{" "}
+                      <span className="font-bold">{activeTenantSlug}</span>
+                    </p>
+                  </div>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={onContinueCurrentTenant}
+                  className="inline-flex w-full items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-200 focus:ring-offset-2"
+                >
+                  Continue to current tenant
+                </button>
+
+                <div className="relative">
+                  <div aria-hidden="true" className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-slate-200" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-white px-2 font-medium tracking-wider text-slate-400">
+                      or switch tenant
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ) : null}
+
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-slate-900">Tenant slug</label>
+              <input
+                className="block w-full rounded-lg border border-slate-200 p-3 text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-blue-600 focus:ring-4 focus:ring-blue-100 disabled:opacity-60"
+                value={slug}
+                onChange={(e) => setSlug(e.target.value)}
+                placeholder='Example: "acme"'
+                autoComplete="off"
+                disabled={isChecking}
+              />
+              <p className="text-xs italic text-slate-500">
+                Example URL: <span className="font-mono">/t/acme/dashboard</span>
+              </p>
             </div>
 
             <button
               type="button"
-              onClick={onContinueCurrentTenant}
-              className="inline-flex items-center justify-center rounded-lg border bg-white px-3 py-2 text-sm font-medium text-slate-900 hover:bg-slate-50"
+              onClick={onContinue}
+              disabled={!canContinue}
+              className="group inline-flex w-full items-center justify-center gap-2 rounded-lg bg-blue-600 px-4 py-3 text-sm font-semibold text-white shadow-sm transition-all hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
             >
-              Continue to current tenant
+              {isChecking ? "Checking access..." : "Continue"}
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </button>
+
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+              <div className="flex">
+                <svg
+                  className="mr-3 mt-0.5 h-5 w-5 flex-shrink-0 text-slate-400"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                  aria-hidden="true"
+                >
+                  <path
+                    fillRule="evenodd"
+                    clipRule="evenodd"
+                    d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
+                  />
+                </svg>
+                <div className="text-sm leading-relaxed text-slate-600">
+                  If you don’t know your tenant slug, ask your Platform Admin or check your
+                  tenant name/slug in the Platform dashboard.
+                </div>
+              </div>
+            </div>
           </div>
-        ) : null}
-
-        <div className="mt-6 space-y-2">
-          <label className="text-sm font-medium">Tenant slug</label>
-          <input
-            className="w-full rounded-lg border px-3 py-2 text-sm"
-            value={slug}
-            onChange={(e) => setSlug(e.target.value)}
-            placeholder='Example: "acme"'
-            autoComplete="off"
-            disabled={isChecking}
-          />
-          <p className="text-xs text-slate-500">
-            Example URL: <span className="font-medium">/t/acme/dashboard</span>
-          </p>
         </div>
-
-        <button
-          type="button"
-          onClick={onContinue}
-          disabled={!canContinue}
-          className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm text-white hover:bg-slate-800 disabled:opacity-60"
-        >
-          {isChecking ? "Checking access..." : "Continue"} <ArrowRight className="h-4 w-4" />
-        </button>
-
-        <div className="mt-4 rounded-lg border bg-slate-50 p-3 text-xs text-slate-600">
-          If you don’t know your tenant slug, ask your Platform Admin or check your tenant name/slug in the Platform
-          dashboard.
-        </div>
-      </div>
+      </main>
     </div>
   );
 }

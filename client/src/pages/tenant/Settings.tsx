@@ -86,10 +86,11 @@ export default function Settings() {
       await qc.invalidateQueries({ queryKey: ["tenantSettings", tenantId] });
       await qc.invalidateQueries({ queryKey: ["tenantMe", tenantSlug] });
     },
-    onError: (err: any) => {
+    onError: (err: unknown) => {
+      const e = err as { response?: { data?: { message?: unknown } }; message?: unknown };
       const msg =
-        err?.response?.data?.message ||
-        err?.message ||
+        (typeof e?.response?.data?.message === "string" && e.response.data.message) ||
+        (typeof e?.message === "string" && e.message) ||
         "Failed to update tenant settings";
       toast.error(msg);
     },
@@ -127,7 +128,12 @@ export default function Settings() {
   if (tenantMeQ.isLoading) {
     return (
       <PageShell title="Tenant Settings" subtitle="Loading tenant context...">
-        <div className="rounded-xl border p-4">Loading…</div>
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600" />
+            <div className="text-sm font-medium text-slate-600">Loading…</div>
+          </div>
+        </div>
       </PageShell>
     );
   }
@@ -136,10 +142,15 @@ export default function Settings() {
   if (!tenantMeQ.data) {
     return (
       <PageShell title="Tenant Settings" subtitle="Tenant context not available">
-        <div className="rounded-xl border p-4">
-          Tenant context not found. Please go back and try again.
-          <div className="mt-3">
-            <button className="rounded-md border px-3 py-1" onClick={() => nav(-1)}>
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+          <div className="text-sm text-slate-700">
+            Tenant context not found. Please go back and try again.
+          </div>
+          <div className="mt-4">
+            <button
+              className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-blue-100"
+              onClick={() => nav(-1)}
+            >
               Back
             </button>
           </div>
@@ -154,108 +165,263 @@ export default function Settings() {
       subtitle={`Tenant: ${tenantSlug}`}
       right={
         <div className="flex items-center gap-2">
-          <button className="rounded-md border px-3 py-1" onClick={() => nav(-1)}>
+          <button
+            className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-blue-100"
+            onClick={() => nav(-1)}
+          >
             Back
           </button>
-          <button className="rounded-md border px-3 py-1" onClick={onRefresh}>
+          <button
+            className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-blue-100"
+            onClick={onRefresh}
+          >
             Refresh
           </button>
         </div>
       }
     >
-      {!isTenantAdmin && (
-        <div className="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm">
-          You are <b>{tenantMeQ.data.role}</b>. Only <b>tenantAdmin</b> can update settings.
-        </div>
-      )}
-
-      <div className="max-w-3xl rounded-2xl border bg-white p-6">
-        {settingsQ.isLoading ? (
-          <div className="rounded-xl border p-4">Loading settings…</div>
-        ) : settingsQ.isError ? (
-          <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm">
-            Failed to load settings. Try Refresh.
-          </div>
-        ) : (
-          <>
-            <div className="grid gap-4 md:grid-cols-2">
-              <div>
-                <label className="text-sm font-medium">Tenant name</label>
-                <input
-                  className="mt-1 w-full rounded-md border px-3 py-2"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="e.g. Acme"
-                  disabled={!isTenantAdmin || updateM.isPending}
+      <div className="space-y-6">
+        {!isTenantAdmin && (
+          <div className="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 p-5 text-sm">
+            <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-white/60 text-amber-700 ring-1 ring-amber-200">
+              <svg
+                viewBox="0 0 24 24"
+                className="h-5 w-5"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M12 8h.01M12 12v4"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
                 />
-                <p className="mt-1 text-xs text-slate-500">
-                  Min 2 characters. (Slug cannot be changed.)
-                </p>
-              </div>
-
-              <div>
-                <label className="text-sm font-medium">Logo URL</label>
-                <input
-                  className="mt-1 w-full rounded-md border px-3 py-2"
-                  value={logoUrl}
-                  onChange={(e) => setLogoUrl(e.target.value)}
-                  placeholder="https://example.com/logo.png"
-                  disabled={!isTenantAdmin || updateM.isPending}
+                <path
+                  d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                  stroke="currentColor"
+                  strokeWidth="2"
                 />
-                <p className="mt-1 text-xs text-slate-500">Must be a valid URL.</p>
+              </svg>
+            </div>
+            <div className="space-y-1">
+              <div className="font-bold text-amber-900">Administrator Access Only</div>
+              <div className="text-amber-800/90">
+                You are <b>{tenantMeQ.data.role}</b>. Only <b>tenantAdmin</b> can update settings.
               </div>
             </div>
+          </div>
+        )}
 
-            <div className="mt-5 flex items-center justify-between rounded-xl border p-4">
-              <div>
-                <div className="font-medium">Archive tenant</div>
-                <div className="text-xs text-slate-500">
-                  When archived, backend blocks updates unless you unarchive.
+        <div className="max-w-3xl space-y-6">
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+            {settingsQ.isLoading ? (
+              <div className="p-6 md:p-8">
+                <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4">
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600" />
+                  <div className="text-sm font-medium text-slate-600">Loading settings…</div>
                 </div>
               </div>
+            ) : settingsQ.isError ? (
+              <div className="p-6 md:p-8">
+                <div className="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 p-5 text-rose-700">
+                  <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-white/70 text-rose-600 ring-1 ring-rose-200">
+                    <svg
+                      viewBox="0 0 24 24"
+                      className="h-5 w-5"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M12 9v4"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                      <path
+                        d="M12 17h.01"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                      />
+                      <path
+                        d="M10.29 3.86l-7.4 12.82A2 2 0 004.62 20h14.76a2 2 0 001.73-3.32l-7.4-12.82a2 2 0 00-3.42 0z"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinejoin="round"
+                      />
+                    </svg>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="font-bold">Failed to load settings</div>
+                    <div className="text-sm opacity-90">Failed to load settings. Try Refresh.</div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="border-b border-slate-100 p-6 md:p-8">
+                  <div className="mb-6">
+                    <h3 className="text-lg font-bold text-slate-900">Tenant Profile</h3>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Update your organization's public information and branding.
+                    </p>
+                  </div>
 
-              <label className="flex items-center gap-2 text-sm">
-                <input
-                  type="checkbox"
-                  checked={isArchived}
-                  onChange={(e) => setIsArchived(e.target.checked)}
-                  disabled={!isTenantAdmin || updateM.isPending}
+                  <div className="grid gap-6 md:grid-cols-2">
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-slate-700">Tenant name</label>
+                      <input
+                        className="w-full rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition-all focus:border-blue-600 focus:ring-4 focus:ring-blue-100 disabled:bg-slate-50 disabled:opacity-60"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="e.g. Acme"
+                        disabled={!isTenantAdmin || updateM.isPending}
+                      />
+                      <p className="text-xs text-slate-500">
+                        Min 2 characters. (Slug cannot be changed.)
+                      </p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="text-sm font-semibold text-slate-700">Logo URL</label>
+                      <input
+                        className="w-full rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition-all focus:border-blue-600 focus:ring-4 focus:ring-blue-100 disabled:bg-slate-50 disabled:opacity-60"
+                        value={logoUrl}
+                        onChange={(e) => setLogoUrl(e.target.value)}
+                        placeholder="https://example.com/logo.png"
+                        disabled={!isTenantAdmin || updateM.isPending}
+                      />
+                      <p className="text-xs text-slate-500">Must be a valid URL.</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="p-6 md:p-8">
+                  <div className="mb-6">
+                    <h3 className="text-lg font-bold text-slate-900">Tenant Status</h3>
+                    <p className="mt-1 text-sm text-slate-500">
+                      Manage the lifecycle and visibility of this tenant environment.
+                    </p>
+                  </div>
+
+                  <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="rounded-lg bg-slate-200 p-2 text-slate-700">
+                        <svg
+                          viewBox="0 0 24 24"
+                          className="h-5 w-5"
+                          fill="none"
+                          aria-hidden="true"
+                        >
+                          <path
+                            d="M21 8v11a2 2 0 01-2 2H5a2 2 0 01-2-2V8"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <path
+                            d="M22 3H2v5h20V3z"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                          />
+                          <path
+                            d="M10 12h4"
+                            stroke="currentColor"
+                            strokeWidth="2"
+                            strokeLinecap="round"
+                          />
+                        </svg>
+                      </div>
+
+                      <div>
+                        <div className="text-sm font-bold text-slate-900">Archive tenant</div>
+                        <div className="text-xs text-slate-500">
+                          When archived, backend blocks updates unless you unarchive.
+                        </div>
+                      </div>
+                    </div>
+
+                    <label className="relative inline-flex cursor-pointer items-center">
+                      <input
+                        type="checkbox"
+                        className="peer sr-only"
+                        checked={isArchived}
+                        onChange={(e) => setIsArchived(e.target.checked)}
+                        disabled={!isTenantAdmin || updateM.isPending}
+                      />
+                      <div className="h-6 w-11 rounded-full bg-slate-300 transition-colors peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-100 peer-disabled:opacity-60 peer-checked:bg-blue-600">
+                        <div className="absolute left-[2px] top-[2px] h-5 w-5 rounded-full border border-slate-200 bg-white transition-transform peer-checked:translate-x-5" />
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-100 bg-slate-50/50 p-6">
+                  <button
+                    className="rounded-lg border border-slate-200 bg-white px-6 py-2.5 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-100 focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:opacity-50"
+                    onClick={() => settingsQ.refetch()}
+                    disabled={settingsQ.isLoading || updateM.isPending}
+                  >
+                    Reload
+                  </button>
+
+                  <button
+                    className="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:opacity-50"
+                    onClick={onSave}
+                    disabled={!canSubmit || updateM.isPending || !isDirty}
+                  >
+                    {updateM.isPending ? "Saving…" : "Save changes"}
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-6">
+            <div className="mb-4 flex items-center gap-2 text-slate-600">
+              <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
+                <path
+                  d="M16 18l2 2 4-4"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                 />
-                Archived
-              </label>
+                <path
+                  d="M21 12a9 9 0 11-9-9"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                />
+              </svg>
+              <h4 className="text-sm font-bold uppercase tracking-wider text-slate-600">
+                System Identifiers
+              </h4>
             </div>
 
-            <div className="mt-6 flex items-center gap-2">
-              <button
-                className="rounded-md border bg-slate-900 px-4 py-2 text-white disabled:opacity-50"
-                onClick={onSave}
-                disabled={!canSubmit || updateM.isPending || !isDirty}
-              >
-                {updateM.isPending ? "Saving…" : "Save changes"}
-              </button>
-
-              <button
-                className="rounded-md border px-4 py-2 disabled:opacity-50"
-                onClick={() => settingsQ.refetch()}
-                disabled={settingsQ.isLoading || updateM.isPending}
-              >
-                Reload
-              </button>
-            </div>
-
-            <div className="mt-6 rounded-xl border bg-slate-50 p-4 text-xs">
-              <div>
-                <b>TenantId:</b> {tenantId}
+            <div className="space-y-3 font-mono text-xs">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                <span className="text-slate-500">TenantId:</span>
+                <span className="select-all font-semibold text-slate-900">{tenantId}</span>
               </div>
-              <div>
-                <b>Slug:</b> {settingsQ.data?.tenant.slug}
+              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
+                <span className="text-slate-500">Slug:</span>
+                <span className="select-all font-semibold text-slate-900">
+                  {settingsQ.data?.tenant.slug}
+                </span>
               </div>
-              <div>
-                <b>Current archived:</b> {String(settingsQ.data?.tenant.isArchived)}
+              <div className="flex items-center justify-between">
+                <span className="text-slate-500">Current archived:</span>
+                <span className="font-semibold text-slate-900">
+                  {String(settingsQ.data?.tenant.isArchived)}
+                </span>
               </div>
             </div>
-          </>
-        )}
+          </div>
+        </div>
       </div>
     </PageShell>
   );

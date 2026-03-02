@@ -1,5 +1,5 @@
 // FILE: client/src/pages/tenant/Invites.tsx
-import { useMemo, useState } from "react";
+import { useMemo, useState, type FormEvent } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
@@ -74,6 +74,21 @@ function statusBadgeClass(status: InviteStatus) {
   }
 }
 
+function statusDotClass(status: InviteStatus) {
+  switch (status) {
+    case "pending":
+      return "bg-amber-500";
+    case "accepted":
+      return "bg-emerald-500";
+    case "revoked":
+      return "bg-slate-400";
+    case "expired":
+      return "bg-rose-500";
+    default:
+      return "bg-slate-400";
+  }
+}
+
 function roleBadgeClass(role: InviteRole) {
   return role === "tenantAdmin"
     ? "bg-slate-900 text-white border-slate-900"
@@ -83,7 +98,8 @@ function roleBadgeClass(role: InviteRole) {
 function normalizeInvites(data: ListInvitesResponse | undefined): InviteItem[] {
   if (!data) return [];
   if (Array.isArray(data)) return data;
-  return Array.isArray((data as any).items) ? (data as any).items : [];
+  if ("items" in data && Array.isArray(data.items)) return data.items;
+  return [];
 }
 
 function getInviteId(inv: InviteItem) {
@@ -94,6 +110,22 @@ function getInviteId(inv: InviteItem) {
 function getInvitedByText(inv: InviteItem) {
   // ✅ Your backend provides invitedByUserId (string)
   return inv.invitedByUserId || "—";
+}
+
+function getErrorMessage(err: unknown, fallback: string) {
+  if (typeof err === "object" && err !== null) {
+    const e = err as {
+      message?: unknown;
+      response?: { data?: { message?: unknown } };
+    };
+
+    const apiMsg = e.response?.data?.message;
+    if (typeof apiMsg === "string" && apiMsg.trim()) return apiMsg;
+
+    const msg = e.message;
+    if (typeof msg === "string" && msg.trim()) return msg;
+  }
+  return fallback;
 }
 
 export default function Invites() {
@@ -142,12 +174,8 @@ export default function Invites() {
       setRole("member");
       await qc.invalidateQueries({ queryKey: ["tenantInvites", tenantId] });
     },
-    onError: (err: any) => {
-      const msg =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Failed to create invite";
-      toast.error(msg);
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err, "Failed to create invite"));
     },
   });
 
@@ -160,16 +188,12 @@ export default function Invites() {
       toast.success("Invite revoked");
       await qc.invalidateQueries({ queryKey: ["tenantInvites", tenantId] });
     },
-    onError: (err: any) => {
-      const msg =
-        err?.response?.data?.message ||
-        err?.message ||
-        "Failed to revoke invite";
-      toast.error(msg);
+    onError: (err: unknown) => {
+      toast.error(getErrorMessage(err, "Failed to revoke invite"));
     },
   });
 
-  const onCreate = (e: React.FormEvent) => {
+  const onCreate = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (!tenantId) return toast.error("Tenant not resolved yet.");
@@ -188,7 +212,16 @@ export default function Invites() {
   if (tenantMeQ.isLoading) {
     return (
       <PageShell title="Invites" subtitle="Loading tenant context...">
-        <div className="rounded-xl border p-4">Loading…</div>
+        <div className="rounded-2xl border bg-white p-6 shadow-sm">
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-xl bg-slate-100" />
+            <div className="space-y-2">
+              <div className="h-3 w-44 rounded bg-slate-100" />
+              <div className="h-3 w-64 rounded bg-slate-100" />
+            </div>
+          </div>
+          <div className="mt-6 h-28 rounded-2xl bg-slate-50" />
+        </div>
       </PageShell>
     );
   }
@@ -197,10 +230,15 @@ export default function Invites() {
   if (!tenantMeQ.data) {
     return (
       <PageShell title="Invites" subtitle="Tenant context not available">
-        <div className="rounded-xl border p-4">
-          Tenant context not found. Please go back and try again.
-          <div className="mt-3">
-            <button className="rounded-md border px-3 py-1" onClick={() => nav(-1)}>
+        <div className="rounded-2xl border bg-white p-6 shadow-sm">
+          <div className="text-sm text-slate-700">
+            Tenant context not found. Please go back and try again.
+          </div>
+          <div className="mt-4">
+            <button
+              className="inline-flex items-center rounded-xl border bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+              onClick={() => nav(-1)}
+            >
               Back
             </button>
           </div>
@@ -215,185 +253,272 @@ export default function Invites() {
       subtitle={`Invite users to tenant: ${tenantSlug}`}
       right={
         <div className="flex items-center gap-2">
-          <button className="rounded-md border px-3 py-1" onClick={() => nav(-1)}>
-            Back
-          </button>
-          <button className="rounded-md border px-3 py-1" onClick={onRefresh}>
+          <button
+            className="inline-flex items-center gap-2 rounded-xl border bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+            onClick={onRefresh}
+          >
+            <span aria-hidden="true">↻</span>
             Refresh
+          </button>
+          <button
+            className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800"
+            onClick={() => nav(-1)}
+          >
+            <span aria-hidden="true">←</span>
+            Back
           </button>
         </div>
       }
     >
+      {/* Role Warning Banner */}
       {!isTenantAdmin && (
-        <div className="mb-4 rounded-xl border border-amber-300 bg-amber-50 p-4 text-sm">
-          You are <b>{tenantMeQ.data.role}</b>. Only <b>tenantAdmin</b> can use invites.
-          <div className="mt-1 text-xs text-slate-600">
-            Server RBAC also enforces this.
+        <div className="mb-8 flex items-start gap-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+            <span aria-hidden="true">🛡️</span>
+          </div>
+          <div className="min-w-0 flex-1">
+            <h4 className="text-sm font-bold text-slate-900">Permissions Notice</h4>
+            <p className="mt-1 text-sm text-slate-700">
+              You are currently logged in as{" "}
+              <span className="font-bold text-amber-700">{tenantMeQ.data.role}</span>. Only
+              users with the <span className="font-semibold">tenantAdmin</span> role are
+              authorized to create or manage invites.
+            </p>
+            <div className="mt-1 text-xs text-slate-600">Server RBAC also enforces this.</div>
           </div>
         </div>
       )}
 
-      {/* Create Invite Form */}
-      <div className="mb-6 max-w-3xl rounded-2xl border bg-white p-6">
-        <div className="mb-4">
-          <h2 className="text-lg font-semibold">Create invite</h2>
-          <p className="text-sm text-slate-600">
-            Create a new invite for this tenant. Default role is member.
-          </p>
-        </div>
-
-        <form onSubmit={onCreate} className="grid gap-4 md:grid-cols-3">
-          <div className="md:col-span-2">
-            <label className="text-sm font-medium">Email</label>
-            <input
-              className="mt-1 w-full rounded-md border px-3 py-2"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              placeholder="user@example.com"
-              disabled={!isTenantAdmin || createInviteM.isPending}
-              required
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium">Role</label>
-            <select
-              className="mt-1 w-full rounded-md border px-3 py-2"
-              value={role}
-              onChange={(e) => setRole(e.target.value as InviteRole)}
-              disabled={!isTenantAdmin || createInviteM.isPending}
-            >
-              <option value="member">member</option>
-              <option value="tenantAdmin">tenantAdmin</option>
-            </select>
-            <p className="mt-1 text-xs text-slate-500">
-              Creating tenantAdmin invites is powerful—use carefully.
-            </p>
-          </div>
-
-          <div className="md:col-span-3 flex items-center gap-2">
-            <button
-              type="submit"
-              className="rounded-md border bg-slate-900 px-4 py-2 text-white disabled:opacity-50"
-              disabled={!isTenantAdmin || createInviteM.isPending || !tenantId}
-            >
-              {createInviteM.isPending ? "Creating…" : "Create invite"}
-            </button>
-
-            <button
-              type="button"
-              className="rounded-md border px-4 py-2 disabled:opacity-50"
-              onClick={() => {
-                setEmail("");
-                setRole("member");
-              }}
-              disabled={createInviteM.isPending}
-            >
-              Reset
-            </button>
-          </div>
-        </form>
-      </div>
-
-      {/* Invites List */}
-      <div className="max-w-6xl rounded-2xl border bg-white p-6">
-        <div className="mb-4 flex items-end justify-between gap-4">
-          <div>
-            <h2 className="text-lg font-semibold">Invites list</h2>
-            <p className="text-sm text-slate-600">
-              Status: pending / accepted / revoked / expired
-            </p>
-          </div>
-          <div className="text-xs text-slate-500">
-            TenantId: <span className="font-mono">{tenantId ?? "—"}</span>
-          </div>
-        </div>
-
-        {invitesQ.isLoading ? (
-          <div className="rounded-xl border p-4">Loading invites…</div>
-        ) : invitesQ.isError ? (
-          <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm">
-            Failed to load invites. Try Refresh.
-          </div>
-        ) : invites.length === 0 ? (
-          <div className="rounded-xl border p-6 text-sm text-slate-600">
-            No invites found.
-          </div>
-        ) : (
-          <div className="overflow-x-auto rounded-xl border">
-            <table className="min-w-[1050px] w-full text-left text-sm">
-              <thead className="bg-slate-50">
-                <tr className="border-b">
-                  <th className="px-4 py-3 font-semibold">Email</th>
-                  <th className="px-4 py-3 font-semibold">Role</th>
-                  <th className="px-4 py-3 font-semibold">Status</th>
-                  <th className="px-4 py-3 font-semibold">Expires</th>
-                  <th className="px-4 py-3 font-semibold">Invited by</th>
-                  <th className="px-4 py-3 font-semibold">Created</th>
-                  <th className="px-4 py-3 font-semibold">Updated</th>
-                  <th className="px-4 py-3 font-semibold">Actions</th>
-                </tr>
-              </thead>
-
-              <tbody>
-                {invites.map((inv) => {
-                  const inviteId = getInviteId(inv);
-                  const canRevoke = isTenantAdmin && inv.status === "pending" && !!inviteId;
-
-                  return (
-                    <tr key={inviteId || inv.email} className="border-b last:border-b-0">
-                      <td className="px-4 py-3">{inv.email}</td>
-
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs ${roleBadgeClass(
-                            inv.role
-                          )}`}
-                        >
-                          {inv.role}
-                        </span>
-                      </td>
-
-                      <td className="px-4 py-3">
-                        <span
-                          className={`inline-flex items-center rounded-full border px-2 py-0.5 text-xs ${statusBadgeClass(
-                            inv.status
-                          )}`}
-                        >
-                          {inv.status}
-                        </span>
-                      </td>
-
-                      <td className="px-4 py-3">{formatDate(inv.expiresAt)}</td>
-                      <td className="px-4 py-3">{getInvitedByText(inv)}</td>
-                      <td className="px-4 py-3">{formatDate(inv.createdAt)}</td>
-                      <td className="px-4 py-3">{formatDate(inv.updatedAt)}</td>
-
-                      <td className="px-4 py-3">
-                        <button
-                          className="rounded-md border px-3 py-1 disabled:opacity-50"
-                          disabled={!canRevoke || revokeInviteM.isPending}
-                          onClick={() => revokeInviteM.mutate(inviteId)}
-                          title={
-                            inv.status !== "pending"
-                              ? "Only pending invites can be revoked"
-                              : "Revoke invite"
-                          }
-                        >
-                          {revokeInviteM.isPending ? "Working…" : "Revoke"}
-                        </button>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-
-            <div className="px-4 py-3 text-xs text-slate-500">
-              Note: Backend RBAC is the real security. UI gating is for UX only.
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+        {/* Create Invite Form Card */}
+        <div className="lg:col-span-1">
+          <div className="overflow-hidden rounded-2xl border bg-white shadow-sm">
+            <div className="border-b border-slate-100 p-6">
+              <h2 className="text-lg font-bold text-slate-900">Create invite</h2>
+              <p className="mt-1 text-xs text-slate-500">
+                Create a new invite for this tenant. Default role is member.
+              </p>
             </div>
+
+            <form onSubmit={onCreate} className="space-y-5 p-6">
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-700">Email</label>
+                <input
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 disabled:opacity-60"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="user@example.com"
+                  disabled={!isTenantAdmin || createInviteM.isPending}
+                  required
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-sm font-semibold text-slate-700">Role</label>
+                <select
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 disabled:opacity-60"
+                  value={role}
+                  onChange={(e) => setRole(e.target.value as InviteRole)}
+                  disabled={!isTenantAdmin || createInviteM.isPending}
+                >
+                  <option value="member">member</option>
+                  <option value="tenantAdmin">tenantAdmin</option>
+                </select>
+                <p className="text-xs text-slate-500">
+                  Creating tenantAdmin invites is powerful—use carefully.
+                </p>
+              </div>
+
+              <div className="pt-2 space-y-3">
+                <button
+                  type="submit"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 disabled:opacity-50"
+                  disabled={!isTenantAdmin || createInviteM.isPending || !tenantId}
+                >
+                  <span aria-hidden="true">＋</span>
+                  {createInviteM.isPending ? "Creating…" : "Create invite"}
+                </button>
+
+                <button
+                  type="button"
+                  className="inline-flex w-full items-center justify-center rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-200 disabled:opacity-50"
+                  onClick={() => {
+                    setEmail("");
+                    setRole("member");
+                  }}
+                  disabled={createInviteM.isPending}
+                >
+                  Reset
+                </button>
+              </div>
+            </form>
           </div>
-        )}
+        </div>
+
+        {/* Invites List Card */}
+        <div className="lg:col-span-2">
+          <div className="overflow-hidden rounded-2xl border bg-white shadow-sm">
+            <div className="flex flex-col gap-2 border-b border-slate-100 p-6 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-slate-900">Invites list</h2>
+                <p className="mt-1 text-xs text-slate-500">
+                  Status: pending / accepted / revoked / expired
+                </p>
+                <p className="mt-1 text-xs font-mono uppercase tracking-wider text-slate-500">
+                  Tenant ID: {tenantId ?? "—"}
+                </p>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-800">
+                  Total: {invites.length}
+                </span>
+              </div>
+            </div>
+
+            {invitesQ.isLoading ? (
+              <div className="p-6">
+                <div className="rounded-2xl border bg-slate-50 p-6 text-sm text-slate-600">
+                  Loading invites…
+                </div>
+              </div>
+            ) : invitesQ.isError ? (
+              <div className="p-6">
+                <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-700">
+                  Failed to load invites. Try Refresh.
+                </div>
+              </div>
+            ) : invites.length === 0 ? (
+              <div className="p-6">
+                <div className="rounded-2xl border bg-white p-8 text-sm text-slate-600">
+                  No invites found.
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="overflow-x-auto">
+                  <table className="min-w-[1050px] w-full border-collapse text-left text-sm">
+                    <thead className="bg-slate-50">
+                      <tr className="border-b">
+                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                          Email
+                        </th>
+                        <th className="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-slate-500">
+                          Role
+                        </th>
+                        <th className="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-slate-500">
+                          Status
+                        </th>
+                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                          Expires
+                        </th>
+                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                          Invited by
+                        </th>
+                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                          Created
+                        </th>
+                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                          Updated
+                        </th>
+                        <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-slate-500">
+                          Actions
+                        </th>
+                      </tr>
+                    </thead>
+
+                    <tbody className="divide-y divide-slate-100">
+                      {invites.map((inv) => {
+                        const inviteId = getInviteId(inv);
+                        const canRevoke =
+                          isTenantAdmin && inv.status === "pending" && !!inviteId;
+
+                        const mutedRow =
+                          inv.status === "revoked" || inv.status === "expired";
+
+                        return (
+                          <tr
+                            key={inviteId || inv.email}
+                            className={[
+                              "transition-colors hover:bg-slate-50/60",
+                              mutedRow ? "opacity-70" : "",
+                            ].join(" ")}
+                          >
+                            <td className="px-6 py-4">
+                              <div className="flex flex-col">
+                                <span className="text-sm font-bold text-slate-900">
+                                  {inv.email}
+                                </span>
+                              </div>
+                            </td>
+
+                            <td className="px-6 py-4 text-center">
+                              <span
+                                className={[
+                                  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium",
+                                  roleBadgeClass(inv.role),
+                                ].join(" ")}
+                              >
+                                {inv.role}
+                              </span>
+                            </td>
+
+                            <td className="px-6 py-4 text-center">
+                              <span
+                                className={[
+                                  "inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-medium",
+                                  statusBadgeClass(inv.status),
+                                ].join(" ")}
+                              >
+                                <span
+                                  className={[
+                                    "mr-1.5 inline-block h-1.5 w-1.5 rounded-full",
+                                    statusDotClass(inv.status),
+                                  ].join(" ")}
+                                  aria-hidden="true"
+                                />
+                                {inv.status}
+                              </span>
+                            </td>
+
+                            <td className="px-6 py-4">{formatDate(inv.expiresAt)}</td>
+                            <td className="px-6 py-4">{getInvitedByText(inv)}</td>
+                            <td className="px-6 py-4">{formatDate(inv.createdAt)}</td>
+                            <td className="px-6 py-4">{formatDate(inv.updatedAt)}</td>
+
+                            <td className="px-6 py-4 text-right">
+                              <button
+                                className="inline-flex items-center justify-center rounded-xl border bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
+                                disabled={!canRevoke || revokeInviteM.isPending}
+                                onClick={() => revokeInviteM.mutate(inviteId)}
+                                title={
+                                  inv.status !== "pending"
+                                    ? "Only pending invites can be revoked"
+                                    : "Revoke invite"
+                                }
+                              >
+                                {revokeInviteM.isPending ? "Working…" : "Revoke"}
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="flex items-center justify-between gap-4 border-t border-slate-100 bg-slate-50/50 px-6 py-4">
+                  <span className="text-xs text-slate-500">
+                    Note: Backend RBAC is the real security. UI gating is for UX only.
+                  </span>
+                  <span className="text-xs text-slate-500">
+                    Showing {invites.length} record{invites.length === 1 ? "" : "s"}
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
       </div>
     </PageShell>
   );

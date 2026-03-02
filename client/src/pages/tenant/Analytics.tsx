@@ -35,9 +35,7 @@ export default function Analytics() {
   const analyticsQ = useQuery({
     queryKey: ["tenantAnalytics", tenantId],
     queryFn: async () => {
-      const { data } = await http.get<TenantAnalyticsResponse>(
-        API.tenant.analytics(tenantId)
-      );
+      const { data } = await http.get<TenantAnalyticsResponse>(API.tenant.analytics(tenantId));
       return data;
     },
     enabled: !!tenantId, // only run after tenantId is resolved
@@ -46,54 +44,152 @@ export default function Analytics() {
   const stats = analyticsQ.data;
 
   return (
-    <PageShell
-      title="Tenant Analytics"
-      subtitle="Tenant-level summary metrics for dashboard cards."
-    >
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <div className="rounded-xl border bg-white p-5">
-          <div className="text-sm text-slate-500">Active Projects</div>
-          <div className="mt-2 text-3xl font-semibold">
-            {analyticsQ.isLoading ? "…" : stats?.activeProjects ?? 0}
+    <PageShell title="Tenant Analytics" subtitle="Tenant-level summary metrics for dashboard cards.">
+      <div className="space-y-6">
+        {/* ================= Error Alerts (keep logic intact) ================= */}
+        {tenantMeQ.isError || analyticsQ.isError ? (
+          <div className="space-y-3">
+            {tenantMeQ.isError ? (
+              <div className="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-700 shadow-sm">
+                <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-rose-100 text-rose-600">
+                  <span className="text-sm font-bold">!</span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold">Failed to load tenant context.</p>
+                  <p className="mt-1 text-xs opacity-80">
+                    Check your connection or permissions and try again.
+                  </p>
+                </div>
+              </div>
+            ) : null}
+
+            {analyticsQ.isError ? (
+              <div className="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 p-4 text-rose-700 shadow-sm">
+                <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-rose-100 text-rose-600">
+                  <span className="text-sm font-bold">!</span>
+                </div>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold">Failed to load analytics stats.</p>
+                  <p className="mt-1 text-xs opacity-80">
+                    Summary metrics could not be synchronized with the central repository.
+                  </p>
+                </div>
+              </div>
+            ) : null}
           </div>
-          <div className="mt-1 text-xs text-slate-500">
-            status = active, deletedAt = null
+        ) : null}
+
+        {/* ================= Summary Metrics Header ================= */}
+        <div className="flex items-center gap-4 pt-2">
+          <span className="h-px flex-1 bg-slate-200" />
+          <h3 className="text-xs font-bold uppercase tracking-widest text-slate-400">
+            Summary Metrics
+          </h3>
+          <span className="h-px flex-1 bg-slate-200" />
+        </div>
+
+        {/* ================= KPI Cards Grid ================= */}
+        <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
+          {/* Card 1: Active Projects */}
+          <div className="group relative rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold uppercase tracking-tight text-slate-500">
+                  Active Projects
+                </p>
+                <div className="rounded-lg bg-blue-50 p-2 text-blue-600 transition-colors duration-300 group-hover:bg-blue-600 group-hover:text-white">
+                  <span className="text-sm font-bold">📁</span>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-4xl font-bold tracking-tight text-slate-900">
+                  {analyticsQ.isLoading ? "…" : stats?.activeProjects ?? 0}
+                </p>
+              </div>
+
+              <div className="border-t border-slate-100 pt-3">
+                <p className="flex items-center gap-2 text-xs text-slate-500">
+                  <span className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-slate-50 text-slate-500">
+                    i
+                  </span>
+                  <span>status = active, deletedAt = null</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 2: Archived Projects */}
+          <div className="group relative rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold uppercase tracking-tight text-slate-500">
+                  Archived Projects
+                </p>
+                <div className="rounded-lg bg-amber-100 p-2 text-amber-700 transition-colors duration-300 group-hover:bg-amber-500 group-hover:text-white">
+                  <span className="text-sm font-bold">🗄️</span>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-4xl font-bold tracking-tight text-slate-900">
+                  {analyticsQ.isLoading ? "…" : stats?.archivedProjects ?? 0}
+                </p>
+              </div>
+
+              <div className="border-t border-slate-100 pt-3">
+                <p className="flex items-center gap-2 text-xs text-slate-500">
+                  <span className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-slate-50 text-slate-500">
+                    i
+                  </span>
+                  <span>status = archived, deletedAt = null</span>
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 3: Members Active */}
+          <div className="group relative rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-md">
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center justify-between">
+                <p className="text-sm font-semibold uppercase tracking-tight text-slate-500">
+                  Members (Active)
+                </p>
+                <div className="rounded-lg bg-emerald-100 p-2 text-emerald-700 transition-colors duration-300 group-hover:bg-emerald-500 group-hover:text-white">
+                  <span className="text-sm font-bold">👥</span>
+                </div>
+              </div>
+
+              <div>
+                <p className="text-4xl font-bold tracking-tight text-slate-900">
+                  {analyticsQ.isLoading ? "…" : stats?.membersCount ?? 0}
+                </p>
+              </div>
+
+              <div className="border-t border-slate-100 pt-3">
+                <p className="flex items-center gap-2 text-xs text-slate-500">
+                  <span className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-slate-50 text-slate-500">
+                    i
+                  </span>
+                  <span>membership status = active</span>
+                </p>
+              </div>
+            </div>
           </div>
         </div>
 
-        <div className="rounded-xl border bg-white p-5">
-          <div className="text-sm text-slate-500">Archived Projects</div>
-          <div className="mt-2 text-3xl font-semibold">
-            {analyticsQ.isLoading ? "…" : stats?.archivedProjects ?? 0}
+        {/* ================= Future Insights Placeholder (visual only) ================= */}
+        <div className="rounded-2xl border-2 border-dashed border-slate-200 bg-white p-8 text-center sm:p-12">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-slate-100 text-slate-400">
+            <span className="text-lg">📊</span>
           </div>
-          <div className="mt-1 text-xs text-slate-500">
-            status = archived, deletedAt = null
-          </div>
-        </div>
-
-        <div className="rounded-xl border bg-white p-5">
-          <div className="text-sm text-slate-500">Members (Active)</div>
-          <div className="mt-2 text-3xl font-semibold">
-            {analyticsQ.isLoading ? "…" : stats?.membersCount ?? 0}
-          </div>
-          <div className="mt-1 text-xs text-slate-500">
-            membership status = active
-          </div>
+          <h3 className="text-lg font-semibold text-slate-900">Waiting for more data</h3>
+          <p className="mx-auto mt-2 max-w-sm text-sm text-slate-500">
+            Once the tenant activity increases, detailed time-series charts and usage patterns will
+            appear here.
+          </p>
         </div>
       </div>
-
-      {/* Loading / error states */}
-      {tenantMeQ.isError ? (
-        <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
-          Failed to load tenant context.
-        </div>
-      ) : null}
-
-      {analyticsQ.isError ? (
-        <div className="mt-4 rounded-lg border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700">
-          Failed to load analytics stats.
-        </div>
-      ) : null}
     </PageShell>
   );
 }

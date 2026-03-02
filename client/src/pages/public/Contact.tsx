@@ -1,6 +1,6 @@
 // FILE: client/src/pages/public/Contact.tsx
 import { useState } from "react";
-import { Mail, MessageSquare, Send, ShieldCheck } from "lucide-react";
+import { Mail, MessageSquare, Send, ShieldCheck, ArrowRight } from "lucide-react";
 import { Link } from "react-router-dom";
 import { toast } from "sonner";
 
@@ -25,126 +25,180 @@ export default function Contact() {
   }
 
   return (
-    <div className="min-h-screen bg-white text-slate-900">
-      <div className="mx-auto max-w-6xl px-4 py-16">
-        <div className="max-w-3xl space-y-4">
-          <div className="inline-flex items-center gap-2 rounded-full border px-3 py-1 text-xs text-slate-700">
-            <ShieldCheck className="h-4 w-4" />
-            Contact
-          </div>
-
-          <h1 className="text-3xl md:text-4xl font-semibold tracking-tight">
-            Get in touch
-          </h1>
-
-          <p className="text-slate-600 leading-relaxed">
-            Have questions about multi-tenant setup, RBAC, or the Projects module?
-            Send a message. This form is a demo placeholder for now (no backend).
-          </p>
+    <div className="min-h-screen bg-slate-50 text-slate-900">
+      {/* Header */}
+      <header className="mx-auto max-w-4xl px-4 pt-16 pb-10 text-center">
+        <div className="mx-auto inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-sm font-semibold text-blue-700">
+          <ShieldCheck className="h-4 w-4" />
+          Contact
         </div>
 
-        <div className="mt-12 grid gap-6 lg:grid-cols-2">
+        <h1 className="mt-6 text-4xl font-bold tracking-tight text-slate-900 md:text-5xl">
+          Get in touch
+        </h1>
+
+        <p className="mx-auto mt-5 max-w-2xl text-base leading-relaxed text-slate-600 md:text-lg">
+          Have questions about multi-tenant setup, RBAC, or the Projects module? Send a message. This form is a demo
+          placeholder for now (no backend).
+        </p>
+      </header>
+
+      {/* Main */}
+      <main className="mx-auto max-w-6xl px-4 pb-20">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-12">
           {/* Contact form */}
-          <div className="rounded-2xl border bg-white p-6 shadow-sm">
-            <div className="flex items-center gap-2">
-              <MessageSquare className="h-5 w-5" />
-              <div className="font-semibold">Message</div>
+          <section className="lg:col-span-7">
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-10">
+              <div className="flex items-center gap-3">
+                <div className="rounded-lg bg-blue-50 p-2">
+                  <MessageSquare className="h-6 w-6 text-blue-600" />
+                </div>
+                <h2 className="text-xl font-semibold text-slate-900">Message</h2>
+              </div>
+
+              <form onSubmit={onSubmit} className="mt-8 space-y-6">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-slate-700" htmlFor="contact-name">
+                      Full Name
+                    </label>
+                    <input
+                      id="contact-name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition-all focus:border-blue-600 focus:ring-4 focus:ring-blue-100 disabled:opacity-60"
+                      placeholder="John Doe"
+                      autoComplete="name"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium text-slate-700" htmlFor="contact-email">
+                      Email Address
+                    </label>
+                    <input
+                      id="contact-email"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition-all focus:border-blue-600 focus:ring-4 focus:ring-blue-100 disabled:opacity-60"
+                      placeholder="john@company.com"
+                      autoComplete="email"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium text-slate-700" htmlFor="contact-message">
+                    How can we help?
+                  </label>
+                  <textarea
+                    id="contact-message"
+                    value={message}
+                    onChange={(e) => setMessage(e.target.value)}
+                    className="min-h-[140px] w-full rounded-xl border border-slate-200 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition-all focus:border-blue-600 focus:ring-4 focus:ring-blue-100 disabled:opacity-60"
+                    placeholder="Tell us what you need..."
+                  />
+                </div>
+
+                <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                  <button
+                    type="submit"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-blue-600 px-6 py-3.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-blue-700 hover:shadow-md focus:outline-none focus:ring-4 focus:ring-blue-100 active:scale-[0.99] md:w-auto"
+                  >
+                    Send message <Send className="h-4 w-4" />
+                  </button>
+
+                  <div className="text-sm text-slate-500">
+                    <span className="font-medium text-slate-700">Demo note:</span> this doesn’t send emails yet — we’ll
+                    wire it later.
+                  </div>
+                </div>
+
+                <div className="border-t border-slate-100 pt-6 text-xs text-slate-500">
+                  Tip: Later you can connect this form to a backend endpoint or email provider (Resend/SendGrid),
+                  without changing the UI.
+                </div>
+              </form>
+            </div>
+          </section>
+
+          {/* Sidebar */}
+          <aside className="space-y-6 lg:col-span-5">
+            {/* Email card */}
+            <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+              <div className="p-6 md:p-8">
+                <div className="flex items-center gap-3">
+                  <div className="rounded-lg border border-slate-100 bg-slate-50 p-2.5">
+                    <Mail className="h-5 w-5 text-slate-600" />
+                  </div>
+                  <h3 className="text-lg font-bold text-slate-900">Email</h3>
+                </div>
+
+                <p className="mt-4 text-sm text-slate-600">
+                  Add your support email here later. For now you can keep a placeholder:
+                </p>
+
+                <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <code className="select-all text-lg font-medium text-blue-700">support@saasify.dev</code>
+                </div>
+
+                <p className="mt-4 text-sm text-slate-600">
+                  You can later replace this with a real address and connect the form to backend/email.
+                </p>
+              </div>
             </div>
 
-            <form onSubmit={onSubmit} className="mt-6 space-y-4">
-              <div>
-                <label className="text-sm font-medium">Name</label>
-                <input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  className="mt-2 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/10"
-                  placeholder="Your name"
-                  autoComplete="name"
-                />
-              </div>
+            {/* Quick links */}
+            <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm md:p-8">
+              <h3 className="text-lg font-bold text-slate-900">Quick links</h3>
 
-              <div>
-                <label className="text-sm font-medium">Email</label>
-                <input
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  className="mt-2 w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/10"
-                  placeholder="you@example.com"
-                  autoComplete="email"
-                />
-              </div>
-
-              <div>
-                <label className="text-sm font-medium">Message</label>
-                <textarea
-                  value={message}
-                  onChange={(e) => setMessage(e.target.value)}
-                  className="mt-2 min-h-[120px] w-full rounded-lg border px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-slate-900/10"
-                  placeholder="Tell us what you need..."
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="inline-flex w-full items-center justify-center gap-2 rounded-lg bg-slate-900 px-4 py-2.5 text-sm text-white hover:bg-slate-800"
-              >
-                Send message <Send className="h-4 w-4" />
-              </button>
-
-              <div className="text-xs text-slate-500">
-                Demo note: this doesn’t send emails yet — we’ll wire it later.
-              </div>
-            </form>
-          </div>
-
-          {/* Contact info + links */}
-          <div className="space-y-6">
-            <div className="rounded-2xl border bg-slate-50 p-6">
-              <div className="flex items-center gap-2">
-                <Mail className="h-5 w-5" />
-                <div className="font-semibold">Email</div>
-              </div>
-
-              <p className="mt-3 text-sm text-slate-600">
-                Add your support email here later. For now you can keep a placeholder:
-              </p>
-
-              <div className="mt-4 rounded-lg border bg-white px-3 py-2 text-sm">
-                support@saasify.dev
-              </div>
-
-              <p className="mt-3 text-xs text-slate-500">
-                You can later replace this with a real address and connect the form to backend/email.
-              </p>
-            </div>
-
-            <div className="rounded-2xl border bg-white p-6 shadow-sm">
-              <div className="font-semibold">Quick links</div>
-
-              <div className="mt-4 grid gap-2 text-sm">
-                <Link to="/docs" className="rounded-lg border px-3 py-2 hover:bg-slate-50">
-                  Docs
+              <div className="mt-6 grid gap-2 text-sm">
+                <Link
+                  to="/docs"
+                  className="group flex items-center justify-between rounded-xl border border-transparent px-4 py-3 text-slate-700 transition-all hover:border-slate-100 hover:bg-slate-50 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100"
+                >
+                  <span className="font-medium">Docs</span>
+                  <ArrowRight className="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
                 </Link>
-                <Link to="/security" className="rounded-lg border px-3 py-2 hover:bg-slate-50">
-                  Security
+
+                <Link
+                  to="/security"
+                  className="group flex items-center justify-between rounded-xl border border-transparent px-4 py-3 text-slate-700 transition-all hover:border-slate-100 hover:bg-slate-50 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100"
+                >
+                  <span className="font-medium">Security</span>
+                  <ArrowRight className="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
                 </Link>
-                <Link to="/pricing" className="rounded-lg border px-3 py-2 hover:bg-slate-50">
-                  Pricing
+
+                <Link
+                  to="/pricing"
+                  className="group flex items-center justify-between rounded-xl border border-transparent px-4 py-3 text-slate-700 transition-all hover:border-slate-100 hover:bg-slate-50 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100"
+                >
+                  <span className="font-medium">Pricing</span>
+                  <ArrowRight className="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
                 </Link>
-                <Link to="/" className="rounded-lg border px-3 py-2 hover:bg-slate-50">
-                  Back to home
+
+                <Link
+                  to="/"
+                  className="group flex items-center justify-between rounded-xl border border-transparent px-4 py-3 text-slate-700 transition-all hover:border-slate-100 hover:bg-slate-50 hover:text-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100"
+                >
+                  <span className="font-medium">Back to home</span>
+                  <ArrowRight className="h-4 w-4 opacity-0 transition-opacity group-hover:opacity-100" />
                 </Link>
               </div>
             </div>
-          </div>
+          </aside>
         </div>
+      </main>
 
-        {/* Footer mini */}
-        <div className="mt-12 text-xs text-slate-500">
-          Tip: Later you can connect this form to a backend endpoint or email provider (Resend/SendGrid),
-          without changing the UI.
-        </div>
-      </div>
+      {/* Footer */}
+      <footer className="px-4 pb-12 text-center">
+        <p className="text-sm text-slate-500">
+          Looking for something else? Visit our{" "}
+          <span className="font-medium text-blue-700 hover:underline hover:underline-offset-4">Help Center</span> or
+          check out our{" "}
+          <span className="font-medium text-blue-700 hover:underline hover:underline-offset-4">Community Forum</span>.
+        </p>
+      </footer>
     </div>
   );
 }

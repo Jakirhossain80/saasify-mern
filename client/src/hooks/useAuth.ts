@@ -44,12 +44,16 @@ export function useAuth(options: UseAuthOptions = {}) {
   async function fetchMyTenantRole(tenantSlug: string): Promise<TenantRole> {
     // ✅ Correct endpoint in your project:
     // GET /api/t/:tenantSlug/me
-    const { data } = await http.get<{ role?: TenantRole; membership?: { role?: TenantRole } }>(
-      API.tenant.me(tenantSlug)
-    );
+    const { data } = await http.get<{
+      role?: TenantRole;
+      membership?: { role?: TenantRole };
+    }>(API.tenant.me(tenantSlug));
 
-    const role = (data?.role ?? data?.membership?.role ?? null) as TenantRole | null;
-    if (role !== "tenantAdmin" && role !== "member") throw new Error("Tenant role not found");
+    const role = (data?.role ??
+      data?.membership?.role ??
+      null) as TenantRole | null;
+    if (role !== "tenantAdmin" && role !== "member")
+      throw new Error("Tenant role not found");
     return role;
   }
 
@@ -62,14 +66,23 @@ export function useAuth(options: UseAuthOptions = {}) {
         if (!useAuthStore.getState().accessToken) {
           try {
             const { data } = await http.post(API.auth.refresh, {});
-            if (data?.accessToken) setAccessToken(data.accessToken);
+            if (data?.accessToken) {
+              setAccessToken(data.accessToken);
+            } else {
+              // ✅ No token returned => ensure user is cleared
+              clearAuth();
+            }
           } catch {
-            // ignore refresh errors (user not logged in)
+            // ✅ Refresh failed => ensure user is cleared
+            clearAuth();
           }
         }
 
         // 2) accessToken -> /me -> user
-        if (useAuthStore.getState().accessToken && !useAuthStore.getState().user) {
+        if (
+          useAuthStore.getState().accessToken &&
+          !useAuthStore.getState().user
+        ) {
           try {
             const { data } = await http.get<{ user: AuthUser }>(API.auth.me);
             setUser(data.user);
@@ -79,7 +92,8 @@ export function useAuth(options: UseAuthOptions = {}) {
         }
 
         // 3) restore tenant slug from localStorage (if not in store)
-        const storedSlug = localStorage.getItem("activeTenantSlug")?.trim() || null;
+        const storedSlug =
+          localStorage.getItem("activeTenantSlug")?.trim() || null;
         if (!useAuthStore.getState().activeTenantSlug && storedSlug) {
           setActiveTenantSlug(storedSlug);
         }
@@ -118,7 +132,8 @@ export function useAuth(options: UseAuthOptions = {}) {
       setBootstrapped(true);
 
       // after login, try to rehydrate tenant role if slug already stored
-      const storedSlug = localStorage.getItem("activeTenantSlug")?.trim() || null;
+      const storedSlug =
+        localStorage.getItem("activeTenantSlug")?.trim() || null;
 
       if (storedSlug) {
         setActiveTenantSlug(storedSlug);
