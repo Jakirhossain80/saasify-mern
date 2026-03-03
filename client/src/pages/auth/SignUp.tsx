@@ -3,7 +3,7 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { useMutation } from "@tanstack/react-query";
-import { Rocket } from "lucide-react";
+import { Eye, EyeOff, Rocket } from "lucide-react";
 import { http } from "../../api/http";
 import { API } from "../../api/endpoints";
 import { useAuthStore } from "../../store/auth.store";
@@ -51,6 +51,9 @@ export default function SignUp() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
+  // ✅ Visual-only password UX (no logic change)
+  const [showPassword, setShowPassword] = useState(false);
+
   // ✅ If signup auto-logs in (user exists), move away from auth UI
   useEffect(() => {
     if (user) {
@@ -84,144 +87,118 @@ export default function SignUp() {
   });
 
   return (
-    <div className="min-h-screen bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
-      <div className="relative flex min-h-screen items-center justify-center p-6">
-        <div
-          className="pointer-events-none absolute inset-0 opacity-70 dark:opacity-60"
-          aria-hidden="true"
-        >
-          <div className="absolute left-1/2 top-20 h-72 w-72 -translate-x-1/2 rounded-full bg-slate-200 blur-3xl dark:bg-slate-800" />
-          <div className="absolute right-10 top-40 h-56 w-56 rounded-full bg-slate-100 blur-3xl dark:bg-slate-900" />
-        </div>
-
-        <div className="relative w-full max-w-[448px] overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-xl shadow-slate-200/60 dark:border-slate-800 dark:bg-slate-900 dark:shadow-none">
-          <div className="p-8 sm:p-10">
-            {/* Header */}
-            <div className="mb-8 flex flex-col items-center text-center">
-              <div className="mb-4 flex h-12 w-12 items-center justify-center rounded-xl bg-slate-900 text-white shadow-sm shadow-slate-900/10 dark:bg-slate-100 dark:text-slate-900 dark:shadow-none">
-                <Rocket className="h-6 w-6" />
-              </div>
-              <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">
-                Sign up
+    // ✅ IMPORTANT: AuthLayout is the wrapper. Keep SignUp compact (no min-h-screen here).
+    <div className="w-full">
+      <div className="mx-auto w-full max-w-[420px]">
+        {/* Compact inner panel (prevents “full-height form” feel) */}
+        <div className="rounded-2xl border border-slate-200 bg-white/80 p-6 shadow-sm backdrop-blur sm:p-7 dark:border-slate-800 dark:bg-slate-900/60 dark:shadow-none">
+          {/* Header */}
+          <div className="flex items-center gap-3">
+            <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-sm shadow-slate-900/10 dark:bg-slate-50 dark:text-slate-900 dark:shadow-none">
+              <Rocket className="h-5 w-5" />
+            </div>
+            <div className="min-w-0">
+              <h1 className="truncate text-lg font-bold tracking-tight text-slate-900 dark:text-white">
+                Create your account
               </h1>
-              <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">
-                Create your SaaSify account.
+              <p className="mt-0.5 text-sm text-slate-500 dark:text-slate-400">
+                Start using SaaSify-MERN.
               </p>
             </div>
+          </div>
 
-            {/* Inline Error Slot (visual placeholder only) */}
-            <div className="hidden mb-6 rounded-xl border border-rose-200 bg-rose-50 p-3 text-sm text-rose-700 dark:border-rose-900/50 dark:bg-rose-950/30 dark:text-rose-200">
-              Please check the details and try again.
+          {/* Form */}
+          <form
+            className="mt-6 space-y-4"
+            onSubmit={(e) => {
+              e.preventDefault();
+
+              const trimmedEmail = email.trim().toLowerCase(); // avoid email casing mismatch
+              register.mutate({
+                name: name.trim(),
+                email: trimmedEmail,
+                password,
+              });
+            }}
+          >
+            <div className="space-y-1.5">
+              <label className="ml-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Name
+              </label>
+              <input
+                className="block h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm shadow-slate-200/40 transition-all focus:border-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500/20 dark:border-slate-800 dark:bg-slate-950/30 dark:text-slate-100 dark:placeholder:text-slate-500 dark:shadow-none"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Your name"
+                autoComplete="name"
+              />
             </div>
 
-            {/* Form */}
-            <form
-              className="space-y-5"
-              onSubmit={(e) => {
-                e.preventDefault();
+            <div className="space-y-1.5">
+              <label className="ml-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                Email
+              </label>
+              <input
+                className="block h-11 w-full rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm shadow-slate-200/40 transition-all focus:border-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500/20 dark:border-slate-800 dark:bg-slate-950/30 dark:text-slate-100 dark:placeholder:text-slate-500 dark:shadow-none"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@saasify.dev"
+                autoComplete="email"
+              />
+            </div>
 
-                const trimmedEmail = email.trim().toLowerCase(); // avoid email casing mismatch
-                register.mutate({
-                  name: name.trim(),
-                  email: trimmedEmail,
-                  password,
-                });
-              }}
-            >
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Name
-                </label>
-                <input
-                  className="block h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-base text-slate-900 placeholder:text-slate-400 shadow-sm shadow-slate-900/5 transition-all focus:border-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-900/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400 dark:shadow-none dark:focus:border-slate-200 dark:focus:ring-slate-100/10"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Your name"
-                  autoComplete="name"
-                />
-              </div>
-
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
-                  Email
-                </label>
-                <input
-                  className="block h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-base text-slate-900 placeholder:text-slate-400 shadow-sm shadow-slate-900/5 transition-all focus:border-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-900/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400 dark:shadow-none dark:focus:border-slate-200 dark:focus:ring-slate-100/10"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@saasify.dev"
-                  autoComplete="email"
-                />
-              </div>
-
-              <div>
-                <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between">
+                <label className="ml-1 text-[11px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   Password
                 </label>
+                <span className="text-[11px] font-medium text-slate-400 dark:text-slate-500">Min 8 chars</span>
+              </div>
+
+              <div className="relative">
                 <input
-                  className="block h-12 w-full rounded-xl border border-slate-200 bg-white px-4 text-base text-slate-900 placeholder:text-slate-400 shadow-sm shadow-slate-900/5 transition-all focus:border-slate-900 focus:outline-none focus:ring-4 focus:ring-slate-900/10 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-100 dark:placeholder:text-slate-400 dark:shadow-none dark:focus:border-slate-200 dark:focus:ring-slate-100/10"
+                  className="block h-11 w-full rounded-xl border border-slate-200 bg-white pl-4 pr-12 text-sm text-slate-900 placeholder:text-slate-400 shadow-sm shadow-slate-200/40 transition-all focus:border-sky-600 focus:outline-none focus:ring-2 focus:ring-sky-500/20 dark:border-slate-800 dark:bg-slate-950/30 dark:text-slate-100 dark:placeholder:text-slate-500 dark:shadow-none"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Create a password"
-                  type="password"
+                  type={showPassword ? "text" : "password"}
                   autoComplete="new-password"
                 />
-                <p className="mt-2 flex items-center gap-1.5 text-xs text-slate-500 dark:text-slate-400">
-                  <span className="inline-flex h-5 w-5 items-center justify-center rounded-md border border-slate-200 bg-slate-50 text-[10px] font-semibold text-slate-500 dark:border-slate-700 dark:bg-slate-800 dark:text-slate-300">
-                    i
-                  </span>
-                  Use at least 8 characters.
-                </p>
-              </div>
 
-              <button
-                className={[
-                  "mt-1 flex h-12 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition-colors",
-                  "bg-slate-900 text-white shadow-sm shadow-slate-900/10 hover:bg-slate-800",
-                  "disabled:cursor-not-allowed disabled:opacity-70",
-                  "dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white dark:shadow-none",
-                ].join(" ")}
-                type="submit"
-                disabled={register.isPending}
-              >
-                {register.isPending ? "Creating..." : "Create account"}
-              </button>
-            </form>
-
-            {/* Footer Link */}
-            <div className="mt-8 text-center">
-              <p className="text-sm text-slate-600 dark:text-slate-400">
-                Already have an account?{" "}
-                <Link
-                  className="font-semibold text-slate-900 hover:underline dark:text-slate-100"
-                  to="/sign-in"
+                <button
+                  type="button"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute inset-y-0 right-2 my-auto inline-flex h-9 w-9 items-center justify-center rounded-lg border border-transparent text-slate-500 transition hover:bg-slate-100 hover:text-slate-700 focus:outline-none focus:ring-2 focus:ring-sky-500/25 dark:text-slate-400 dark:hover:bg-slate-800 dark:hover:text-slate-200"
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
-                  Sign in
-                </Link>
-              </p>
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
+              </div>
             </div>
-          </div>
 
-          {/* Decorative Footer Bottom */}
-          <div className="flex justify-center gap-6 border-t border-slate-100 bg-slate-50 px-8 py-4 dark:border-slate-800 dark:bg-slate-800/40">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              Secure SSL Encryption
-            </span>
-          </div>
-        </div>
+            <button
+              className={[
+                "mt-2 flex h-11 w-full items-center justify-center gap-2 rounded-xl px-4 text-sm font-semibold transition-all",
+                "focus:outline-none focus:ring-2 focus:ring-sky-500/30",
+                register.isPending
+                  ? "bg-slate-900/80 text-white/80 cursor-not-allowed shadow-none"
+                  : "bg-slate-900 hover:bg-slate-800 text-white shadow-md shadow-slate-900/10 dark:shadow-none",
+              ].join(" ")}
+              type="submit"
+              disabled={register.isPending}
+            >
+              {register.isPending ? "Creating..." : "Create account"}
+            </button>
+          </form>
 
-        {/* Optional Helper Slot Area */}
-        <div className="absolute bottom-6 left-1/2 w-full max-w-[448px] -translate-x-1/2 px-4">
-          <div className="flex items-center justify-between text-xs text-slate-400 dark:text-slate-500">
-            <span>© 2024 SaaSify Inc.</span>
-            <div className="flex gap-4">
-              <a className="hover:text-slate-600 dark:hover:text-slate-300" href="#">
-                Privacy
-              </a>
-              <a className="hover:text-slate-600 dark:hover:text-slate-300" href="#">
-                Terms
-              </a>
-            </div>
+          {/* Footer Link */}
+          <div className="mt-5 text-center">
+            <p className="text-sm text-slate-600 dark:text-slate-400">
+              Already have an account?{" "}
+              <Link className="font-semibold text-slate-900 hover:underline dark:text-slate-100" to="/sign-in">
+                Sign in
+              </Link>
+            </p>
           </div>
         </div>
       </div>

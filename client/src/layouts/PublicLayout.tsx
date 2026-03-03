@@ -2,6 +2,7 @@
 import { Outlet, useNavigate, NavLink } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useAuthStore } from "../store/auth.store";
+import Footer from "../components/Footer";
 
 export default function PublicLayout() {
   const nav = useNavigate();
@@ -177,7 +178,7 @@ export default function PublicLayout() {
         </div>
       </main>
 
-      <footer className="border-t border-slate-200 bg-white">
+      {/* <footer className="border-t border-slate-200 bg-white">
         <div className="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8 lg:py-16">
           <div className="grid grid-cols-2 gap-8 md:grid-cols-4 lg:grid-cols-5 xl:gap-12">
             <div className="col-span-2 lg:col-span-2">
@@ -205,7 +206,13 @@ export default function PublicLayout() {
             </p>
           </div>
         </div>
-      </footer>
+      </footer> */}
+    
+    
+    <footer>
+      <Footer/>
+    </footer>
+    
     </div>
   );
 }
