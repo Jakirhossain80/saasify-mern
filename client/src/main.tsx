@@ -7,6 +7,10 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools";
 import { Toaster } from "sonner";
 import { router } from "./routes";
 import "./index.css";
+import { useTheme } from "./store/theme.store";
+
+// ✅ Prevents light → dark flash on refresh (apply theme before first paint)
+useTheme.getState().init();
 
 const queryClient = new QueryClient({
   defaultOptions: {

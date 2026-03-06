@@ -128,10 +128,10 @@ export default function Settings() {
   if (tenantMeQ.isLoading) {
     return (
       <PageShell title="Tenant Settings" subtitle="Loading tenant context...">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center gap-3">
-            <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600" />
-            <div className="text-sm font-medium text-slate-600">Loading…</div>
+            <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600 dark:border-slate-700" />
+            <div className="text-sm font-medium text-slate-600 dark:text-slate-400">Loading…</div>
           </div>
         </div>
       </PageShell>
@@ -142,13 +142,13 @@ export default function Settings() {
   if (!tenantMeQ.data) {
     return (
       <PageShell title="Tenant Settings" subtitle="Tenant context not available">
-        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-          <div className="text-sm text-slate-700">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="text-sm text-slate-700 dark:text-slate-300">
             Tenant context not found. Please go back and try again.
           </div>
           <div className="mt-4">
             <button
-              className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-blue-100"
+              className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-blue-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-950 dark:focus:ring-blue-500/20"
               onClick={() => nav(-1)}
             >
               Back
@@ -166,13 +166,13 @@ export default function Settings() {
       right={
         <div className="flex items-center gap-2">
           <button
-            className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-blue-100"
+            className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-blue-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-950 dark:focus:ring-blue-500/20"
             onClick={() => nav(-1)}
           >
             Back
           </button>
           <button
-            className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-blue-100"
+            className="inline-flex items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-blue-100 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-950 dark:focus:ring-blue-500/20"
             onClick={onRefresh}
           >
             Refresh
@@ -182,8 +182,8 @@ export default function Settings() {
     >
       <div className="space-y-6">
         {!isTenantAdmin && (
-          <div className="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 p-5 text-sm">
-            <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-white/60 text-amber-700 ring-1 ring-amber-200">
+          <div className="flex items-start gap-3 rounded-xl border border-amber-300 bg-amber-50 p-5 text-sm dark:border-amber-900/40 dark:bg-amber-900/20">
+            <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-white/60 text-amber-700 ring-1 ring-amber-200 dark:bg-slate-900/40 dark:text-amber-300 dark:ring-amber-900/40">
               <svg
                 viewBox="0 0 24 24"
                 className="h-5 w-5"
@@ -204,8 +204,8 @@ export default function Settings() {
               </svg>
             </div>
             <div className="space-y-1">
-              <div className="font-bold text-amber-900">Administrator Access Only</div>
-              <div className="text-amber-800/90">
+              <div className="font-bold text-amber-900 dark:text-amber-200">Administrator Access Only</div>
+              <div className="text-amber-800/90 dark:text-amber-300">
                 You are <b>{tenantMeQ.data.role}</b>. Only <b>tenantAdmin</b> can update settings.
               </div>
             </div>
@@ -213,18 +213,18 @@ export default function Settings() {
         )}
 
         <div className="max-w-3xl space-y-6">
-          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
             {settingsQ.isLoading ? (
               <div className="p-6 md:p-8">
-                <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4">
-                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600" />
-                  <div className="text-sm font-medium text-slate-600">Loading settings…</div>
+                <div className="flex items-center gap-3 rounded-xl border border-slate-200 bg-white p-4 dark:border-slate-800 dark:bg-slate-900">
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-slate-300 border-t-blue-600 dark:border-slate-700" />
+                  <div className="text-sm font-medium text-slate-600 dark:text-slate-400">Loading settings…</div>
                 </div>
               </div>
             ) : settingsQ.isError ? (
               <div className="p-6 md:p-8">
-                <div className="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 p-5 text-rose-700">
-                  <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-white/70 text-rose-600 ring-1 ring-rose-200">
+                <div className="flex items-start gap-3 rounded-xl border border-rose-200 bg-rose-50 p-5 text-rose-700 dark:border-rose-900/40 dark:bg-rose-900/20 dark:text-rose-200">
+                  <div className="mt-0.5 flex h-8 w-8 items-center justify-center rounded-lg bg-white/70 text-rose-600 ring-1 ring-rose-200 dark:bg-slate-900/40 dark:text-rose-300 dark:ring-rose-900/40">
                     <svg
                       viewBox="0 0 24 24"
                       className="h-5 w-5"
@@ -259,54 +259,54 @@ export default function Settings() {
               </div>
             ) : (
               <>
-                <div className="border-b border-slate-100 p-6 md:p-8">
+                <div className="border-b border-slate-100 p-6 md:p-8 dark:border-slate-800">
                   <div className="mb-6">
-                    <h3 className="text-lg font-bold text-slate-900">Tenant Profile</h3>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Tenant Profile</h3>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                       Update your organization's public information and branding.
                     </p>
                   </div>
 
                   <div className="grid gap-6 md:grid-cols-2">
                     <div className="space-y-2">
-                      <label className="text-sm font-semibold text-slate-700">Tenant name</label>
+                      <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">Tenant name</label>
                       <input
-                        className="w-full rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition-all focus:border-blue-600 focus:ring-4 focus:ring-blue-100 disabled:bg-slate-50 disabled:opacity-60"
+                        className="w-full rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition-all focus:border-blue-600 focus:ring-4 focus:ring-blue-100 disabled:bg-slate-50 disabled:opacity-60 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500 dark:disabled:bg-slate-950 dark:focus:ring-blue-500/20"
                         value={name}
                         onChange={(e) => setName(e.target.value)}
                         placeholder="e.g. Acme"
                         disabled={!isTenantAdmin || updateM.isPending}
                       />
-                      <p className="text-xs text-slate-500">
+                      <p className="text-xs text-slate-500 dark:text-slate-400">
                         Min 2 characters. (Slug cannot be changed.)
                       </p>
                     </div>
 
                     <div className="space-y-2">
-                      <label className="text-sm font-semibold text-slate-700">Logo URL</label>
+                      <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">Logo URL</label>
                       <input
-                        className="w-full rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition-all focus:border-blue-600 focus:ring-4 focus:ring-blue-100 disabled:bg-slate-50 disabled:opacity-60"
+                        className="w-full rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-900 placeholder-slate-400 outline-none transition-all focus:border-blue-600 focus:ring-4 focus:ring-blue-100 disabled:bg-slate-50 disabled:opacity-60 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500 dark:disabled:bg-slate-950 dark:focus:ring-blue-500/20"
                         value={logoUrl}
                         onChange={(e) => setLogoUrl(e.target.value)}
                         placeholder="https://example.com/logo.png"
                         disabled={!isTenantAdmin || updateM.isPending}
                       />
-                      <p className="text-xs text-slate-500">Must be a valid URL.</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400">Must be a valid URL.</p>
                     </div>
                   </div>
                 </div>
 
                 <div className="p-6 md:p-8">
                   <div className="mb-6">
-                    <h3 className="text-lg font-bold text-slate-900">Tenant Status</h3>
-                    <p className="mt-1 text-sm text-slate-500">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Tenant Status</h3>
+                    <p className="mt-1 text-sm text-slate-500 dark:text-slate-400">
                       Manage the lifecycle and visibility of this tenant environment.
                     </p>
                   </div>
 
-                  <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="flex items-center justify-between gap-4 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
                     <div className="flex items-center gap-3">
-                      <div className="rounded-lg bg-slate-200 p-2 text-slate-700">
+                      <div className="rounded-lg bg-slate-200 p-2 text-slate-700 dark:bg-slate-800 dark:text-slate-300">
                         <svg
                           viewBox="0 0 24 24"
                           className="h-5 w-5"
@@ -337,8 +337,8 @@ export default function Settings() {
                       </div>
 
                       <div>
-                        <div className="text-sm font-bold text-slate-900">Archive tenant</div>
-                        <div className="text-xs text-slate-500">
+                        <div className="text-sm font-bold text-slate-900 dark:text-slate-100">Archive tenant</div>
+                        <div className="text-xs text-slate-500 dark:text-slate-400">
                           When archived, backend blocks updates unless you unarchive.
                         </div>
                       </div>
@@ -352,16 +352,16 @@ export default function Settings() {
                         onChange={(e) => setIsArchived(e.target.checked)}
                         disabled={!isTenantAdmin || updateM.isPending}
                       />
-                      <div className="h-6 w-11 rounded-full bg-slate-300 transition-colors peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-100 peer-disabled:opacity-60 peer-checked:bg-blue-600">
-                        <div className="absolute left-[2px] top-[2px] h-5 w-5 rounded-full border border-slate-200 bg-white transition-transform peer-checked:translate-x-5" />
+                      <div className="h-6 w-11 rounded-full bg-slate-300 transition-colors peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-100 peer-disabled:opacity-60 peer-checked:bg-blue-600 dark:bg-slate-700 dark:peer-focus:ring-blue-500/20">
+                        <div className="absolute left-[2px] top-[2px] h-5 w-5 rounded-full border border-slate-200 bg-white transition-transform peer-checked:translate-x-5 dark:border-slate-800 dark:bg-slate-100" />
                       </div>
                     </label>
                   </div>
                 </div>
 
-                <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-100 bg-slate-50/50 p-6">
+                <div className="flex flex-wrap items-center justify-end gap-3 border-t border-slate-100 bg-slate-50/50 p-6 dark:border-slate-800 dark:bg-slate-950/50">
                   <button
-                    className="rounded-lg border border-slate-200 bg-white px-6 py-2.5 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-100 focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:opacity-50"
+                    className="rounded-lg border border-slate-200 bg-white px-6 py-2.5 text-sm font-semibold text-slate-700 transition-all hover:bg-slate-100 focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:opacity-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-950 dark:focus:ring-blue-500/20"
                     onClick={() => settingsQ.refetch()}
                     disabled={settingsQ.isLoading || updateM.isPending}
                   >
@@ -369,7 +369,7 @@ export default function Settings() {
                   </button>
 
                   <button
-                    className="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:opacity-50"
+                    className="rounded-lg bg-blue-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-100 disabled:opacity-50 dark:focus:ring-blue-500/20"
                     onClick={onSave}
                     disabled={!canSubmit || updateM.isPending || !isDirty}
                   >
@@ -380,8 +380,8 @@ export default function Settings() {
             )}
           </div>
 
-          <div className="rounded-xl border border-slate-200 bg-slate-50 p-6">
-            <div className="mb-4 flex items-center gap-2 text-slate-600">
+          <div className="rounded-xl border border-slate-200 bg-slate-50 p-6 dark:border-slate-800 dark:bg-slate-950">
+            <div className="mb-4 flex items-center gap-2 text-slate-600 dark:text-slate-400">
               <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" aria-hidden="true">
                 <path
                   d="M16 18l2 2 4-4"
@@ -397,25 +397,25 @@ export default function Settings() {
                   strokeLinecap="round"
                 />
               </svg>
-              <h4 className="text-sm font-bold uppercase tracking-wider text-slate-600">
+              <h4 className="text-sm font-bold uppercase tracking-wider text-slate-600 dark:text-slate-400">
                 System Identifiers
               </h4>
             </div>
 
             <div className="space-y-3 font-mono text-xs">
-              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                <span className="text-slate-500">TenantId:</span>
-                <span className="select-all font-semibold text-slate-900">{tenantId}</span>
+              <div className="flex items-center justify-between border-b border-slate-200 pb-2 dark:border-slate-800">
+                <span className="text-slate-500 dark:text-slate-400">TenantId:</span>
+                <span className="select-all font-semibold text-slate-900 dark:text-slate-100">{tenantId}</span>
               </div>
-              <div className="flex items-center justify-between border-b border-slate-200 pb-2">
-                <span className="text-slate-500">Slug:</span>
-                <span className="select-all font-semibold text-slate-900">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-2 dark:border-slate-800">
+                <span className="text-slate-500 dark:text-slate-400">Slug:</span>
+                <span className="select-all font-semibold text-slate-900 dark:text-slate-100">
                   {settingsQ.data?.tenant.slug}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-slate-500">Current archived:</span>
-                <span className="font-semibold text-slate-900">
+                <span className="text-slate-500 dark:text-slate-400">Current archived:</span>
+                <span className="font-semibold text-slate-900 dark:text-slate-100">
                   {String(settingsQ.data?.tenant.isArchived)}
                 </span>
               </div>
@@ -426,3 +426,4 @@ export default function Settings() {
     </PageShell>
   );
 }
+

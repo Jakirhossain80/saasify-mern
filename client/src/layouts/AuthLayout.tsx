@@ -5,9 +5,9 @@ export default function AuthLayout() {
   return (
     <div className="min-h-screen w-full bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       {/* ✅ Prevent unwanted page scrollbar on desktop */}
-      <div className="flex min-h-screen w-full lg:h-screen lg:overflow-hidden">
+      <div className="flex min-h-screen w-11/12 ml-8 lg:h-screen lg:overflow-hidden">
         {/* Left Panel (Desktop Only) */}
-        <aside className="relative hidden lg:flex lg:w-[45%] flex-col overflow-hidden border-r border-slate-200 bg-white p-10 xl:p-12 dark:border-slate-800 dark:bg-slate-900">
+        <aside className="relative hidden lg:flex lg:w-[45%] flex-col overflow-hidden my-5 border-r border-slate-200 bg-white p-10 xl:p-12 dark:border-slate-800 dark:bg-slate-900">
           {/* Background blobs */}
           <div className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-sky-200/40 blur-3xl dark:bg-sky-500/10" />
           <div className="pointer-events-none absolute -left-20 bottom-[-4rem] h-80 w-80 rounded-full bg-indigo-200/30 blur-3xl dark:bg-indigo-500/10" />

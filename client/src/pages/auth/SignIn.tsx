@@ -1,6 +1,6 @@
 // FILE: client/src/pages/auth/SignIn.tsx
 import { useEffect, useState } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 
 export default function SignIn() {
@@ -153,6 +153,17 @@ export default function SignIn() {
                 "Sign in"
               )}
             </button>
+
+            {/* ✅ Added Sign Up link (UI only) */}
+            <p className="pt-1 text-center text-sm text-slate-600 dark:text-slate-400">
+              Don&apos;t have an account?{" "}
+              <Link
+                to="/sign-up"
+                className="font-semibold text-slate-900 hover:underline dark:text-slate-100"
+              >
+                Sign up
+              </Link>
+            </p>
           </form>
         </div>
 

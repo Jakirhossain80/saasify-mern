@@ -10,7 +10,7 @@ type Feature = {
 
 function IconWrap({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-700/10">
+    <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 ring-1 ring-inset ring-blue-700/10 dark:bg-blue-600/10 dark:text-blue-300 dark:ring-blue-500/20">
       {children}
     </div>
   );
@@ -18,8 +18,8 @@ function IconWrap({ children }: { children: React.ReactNode }) {
 
 function Check({ children }: { children: React.ReactNode }) {
   return (
-    <li className="flex gap-2 text-sm text-slate-600">
-      <span className="mt-0.5 inline-flex h-5 w-5 flex-none items-center justify-center rounded-md bg-slate-900 text-white text-[11px]">
+    <li className="flex gap-2 text-sm text-slate-600 dark:text-slate-400">
+      <span className="mt-0.5 inline-flex h-5 w-5 flex-none items-center justify-center rounded-md bg-slate-900 text-white text-[11px] dark:bg-slate-100 dark:text-slate-900">
         ✓
       </span>
       <span className="leading-6">{children}</span>
@@ -29,13 +29,9 @@ function Check({ children }: { children: React.ReactNode }) {
 
 function MiniStat({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-      <div className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-        {label}
-      </div>
-      <div className="mt-2 text-2xl font-bold tracking-tight text-slate-900">
-        {value}
-      </div>
+    <div className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+      <div className="text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">{label}</div>
+      <div className="mt-2 text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">{value}</div>
     </div>
   );
 }
@@ -45,11 +41,7 @@ export default function Features() {
     {
       title: "Multi-Tenant Architecture",
       desc: "Tenant isolation baked into routing, APIs, and permission checks — so data never leaks across organizations.",
-      bullets: [
-        "Tenant-scoped APIs and guards",
-        "Slug-based tenant routing (/t/:tenantSlug/...)",
-        "Tenant context restored automatically",
-      ],
+      bullets: ["Tenant-scoped APIs and guards", "Slug-based tenant routing (/t/:tenantSlug/...)", "Tenant context restored automatically"],
       icon: (
         <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
           <path d="M3.5 7.5 12 3l8.5 4.5V17L12 21l-8.5-4V7.5Z" />
@@ -61,11 +53,7 @@ export default function Features() {
     {
       title: "RBAC & Role Gates",
       desc: "Clean access rules for platform admins, tenant admins, and members — enforced via UI + server.",
-      bullets: [
-        "Platform Admin vs Tenant Admin vs Member",
-        "RoleGate for tenant pages (members/invites/analytics/settings)",
-        "ProtectedRoute prevents unauthorized access",
-      ],
+      bullets: ["Platform Admin vs Tenant Admin vs Member", "RoleGate for tenant pages (members/invites/analytics/settings)", "ProtectedRoute prevents unauthorized access"],
       icon: (
         <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
           <path d="M12 12a4 4 0 1 0-4-4 4 4 0 0 0 4 4Z" />
@@ -78,11 +66,7 @@ export default function Features() {
     {
       title: "Secure Auth (JWT + Refresh Cookies)",
       desc: "Token lifecycle that feels like a real production SaaS: refresh cookie → access token → session restore.",
-      bullets: [
-        "httpOnly refresh cookie strategy",
-        "Axios withCredentials enabled",
-        "Auto refresh-once flow for 401 responses",
-      ],
+      bullets: ["httpOnly refresh cookie strategy", "Axios withCredentials enabled", "Auto refresh-once flow for 401 responses"],
       icon: (
         <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
           <path d="M12 11V7" />
@@ -95,11 +79,7 @@ export default function Features() {
     {
       title: "Projects Module",
       desc: "Tenant-scoped project management with clean UI patterns and analytics-friendly structure.",
-      bullets: [
-        "Active + archived projects split",
-        "Safe routing within tenant context",
-        "Easy to extend with tags, status, and audit trails",
-      ],
+      bullets: ["Active + archived projects split", "Safe routing within tenant context", "Easy to extend with tags, status, and audit trails"],
       icon: (
         <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
           <path d="M4 7h16" />
@@ -112,11 +92,7 @@ export default function Features() {
     {
       title: "Invites & Team Management",
       desc: "A practical onboarding flow for teams: invite members, manage roles, and control access.",
-      bullets: [
-        "Invite creation + status handling",
-        "Member approval workflows (extendable)",
-        "Admin-only members/invites pages",
-      ],
+      bullets: ["Invite creation + status handling", "Member approval workflows (extendable)", "Admin-only members/invites pages"],
       icon: (
         <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
           <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2" />
@@ -128,11 +104,7 @@ export default function Features() {
     {
       title: "Audit-Ready Tracking",
       desc: "Designed for SaaS operations: actions can be tracked and reviewed (platform & tenant scope).",
-      bullets: [
-        "Audit logs page for platform admins",
-        "Works with real-world compliance thinking",
-        "Extensible metadata pattern",
-      ],
+      bullets: ["Audit logs page for platform admins", "Works with real-world compliance thinking", "Extensible metadata pattern"],
       icon: (
         <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
           <path d="M7 3h10v4H7z" />
@@ -148,49 +120,49 @@ export default function Features() {
     <div className="py-12 sm:py-16 lg:py-20">
       {/* Hero */}
       <section className="mx-auto max-w-7xl">
-        <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 shadow-sm sm:p-10 lg:p-12">
+        <div className="relative overflow-hidden rounded-3xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-10 lg:p-12">
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute -right-16 -top-16 h-72 w-72 rounded-full bg-blue-100/60 blur-3xl"
+            className="pointer-events-none absolute -right-16 -top-16 h-72 w-72 rounded-full bg-blue-100/60 blur-3xl dark:bg-blue-600/10"
           />
           <div
             aria-hidden="true"
-            className="pointer-events-none absolute -left-20 bottom-[-5rem] h-80 w-80 rounded-full bg-sky-100/50 blur-3xl"
+            className="pointer-events-none absolute -left-20 bottom-[-5rem] h-80 w-80 rounded-full bg-sky-100/50 blur-3xl dark:bg-sky-500/10"
           />
 
           <div className="relative">
-            <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700">
+            <div className="inline-flex items-center gap-2 rounded-full border border-blue-100 bg-blue-50 px-3 py-1 text-xs font-semibold text-blue-700 dark:border-blue-600/30 dark:bg-blue-600/10 dark:text-blue-300">
               SaaSify-MERN
-              <span className="h-1 w-1 rounded-full bg-blue-400" />
+              <span className="h-1 w-1 rounded-full bg-blue-400 dark:bg-blue-300" />
               Features
             </div>
 
-            <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl">
+            <h1 className="mt-4 text-3xl font-extrabold tracking-tight text-slate-900 dark:text-slate-100 sm:text-4xl">
               Enterprise-grade building blocks for a{" "}
-              <span className="text-blue-600">multi-tenant SaaS</span>.
+              <span className="text-blue-600 dark:text-blue-400">multi-tenant SaaS</span>.
             </h1>
 
-            <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600">
-              Everything is structured like a real product: role-based access, tenant isolation,
-              secure authentication, and scalable dashboard modules — ready for your portfolio and beyond.
+            <p className="mt-4 max-w-2xl text-base leading-7 text-slate-600 dark:text-slate-400">
+              Everything is structured like a real product: role-based access, tenant isolation, secure authentication,
+              and scalable dashboard modules — ready for your portfolio and beyond.
             </p>
 
             <div className="mt-8 flex flex-wrap items-center gap-3">
               <Link
                 to="/sign-up"
-                className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-200 transition-all hover:bg-blue-700 active:scale-95"
+                className="rounded-xl bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white shadow-sm shadow-blue-200 transition-all hover:bg-blue-700 active:scale-95 dark:shadow-blue-500/10"
               >
                 Start free
               </Link>
               <Link
                 to="/sign-in"
-                className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 shadow-sm transition-all hover:bg-slate-50 active:scale-95"
+                className="rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 shadow-sm transition-all hover:bg-slate-50 active:scale-95 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-950"
               >
                 Sign in
               </Link>
               <Link
                 to="/"
-                className="rounded-xl px-4 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-900"
+                className="rounded-xl px-4 py-2.5 text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100"
               >
                 Back to Landing →
               </Link>
@@ -210,17 +182,13 @@ export default function Features() {
       <section className="mx-auto mt-12 max-w-7xl">
         <div className="flex items-end justify-between gap-6">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight text-slate-900">
-              Core feature set
-            </h2>
-            <p className="mt-2 text-sm text-slate-600">
-              Built to feel like a real SaaS, not a demo.
-            </p>
+            <h2 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Core feature set</h2>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">Built to feel like a real SaaS, not a demo.</p>
           </div>
 
           <Link
             to="/pricing"
-            className="hidden rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm hover:bg-slate-50 sm:inline-flex"
+            className="hidden rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-900 shadow-sm hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-950 sm:inline-flex"
           >
             View pricing
           </Link>
@@ -230,19 +198,17 @@ export default function Features() {
           {features.map((f) => (
             <div
               key={f.title}
-              className="group rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+              className="group rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md dark:border-slate-800 dark:bg-slate-900"
             >
               <div className="flex items-start justify-between gap-4">
                 <IconWrap>{f.icon}</IconWrap>
-                <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-600">
+                <span className="rounded-full border border-slate-200 bg-slate-50 px-2 py-0.5 text-[11px] font-semibold text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400">
                   SaaS
                 </span>
               </div>
 
-              <h3 className="mt-4 text-lg font-bold tracking-tight text-slate-900">
-                {f.title}
-              </h3>
-              <p className="mt-2 text-sm leading-6 text-slate-600">{f.desc}</p>
+              <h3 className="mt-4 text-lg font-bold tracking-tight text-slate-900 dark:text-slate-100">{f.title}</h3>
+              <p className="mt-2 text-sm leading-6 text-slate-600 dark:text-slate-400">{f.desc}</p>
 
               <ul className="mt-4 space-y-2">
                 {f.bullets.map((b) => (
@@ -250,9 +216,9 @@ export default function Features() {
                 ))}
               </ul>
 
-              <div className="mt-5 h-px w-full bg-slate-100" />
+              <div className="mt-5 h-px w-full bg-slate-100 dark:bg-slate-800" />
 
-              <div className="mt-4 text-xs font-semibold uppercase tracking-wider text-slate-500">
+              <div className="mt-4 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                 Designed for real-world SaaS
               </div>
             </div>
@@ -262,12 +228,10 @@ export default function Features() {
 
       {/* CTA */}
       <section className="mx-auto mt-12 max-w-7xl">
-        <div className="rounded-3xl border border-slate-200 bg-slate-900 p-8 text-white shadow-sm sm:p-10">
+        <div className="rounded-3xl border border-slate-200 bg-slate-900 p-8 text-white shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-10">
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div>
-              <h3 className="text-2xl font-extrabold tracking-tight">
-                Ready to explore the dashboard?
-              </h3>
+              <h3 className="text-2xl font-extrabold tracking-tight">Ready to explore the dashboard?</h3>
               <p className="mt-2 max-w-xl text-sm leading-6 text-white/80">
                 Sign in, pick a tenant, and experience the multi-tenant flow exactly like a real SaaS product.
               </p>
@@ -276,7 +240,7 @@ export default function Features() {
             <div className="flex flex-wrap items-center gap-3">
               <Link
                 to="/sign-in"
-                className="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 transition-all hover:bg-slate-100 active:scale-95"
+                className="rounded-xl bg-white px-5 py-2.5 text-sm font-semibold text-slate-900 transition-all hover:bg-slate-100 active:scale-95 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
               >
                 Sign in
               </Link>

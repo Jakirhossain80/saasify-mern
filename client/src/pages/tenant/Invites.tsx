@@ -62,15 +62,15 @@ function formatDate(input?: string | null) {
 function statusBadgeClass(status: InviteStatus) {
   switch (status) {
     case "pending":
-      return "bg-amber-100 text-amber-800 border-amber-200";
+      return "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-900/30 dark:text-amber-300 dark:border-amber-900/50";
     case "accepted":
-      return "bg-emerald-100 text-emerald-800 border-emerald-200";
+      return "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-900/50";
     case "revoked":
-      return "bg-slate-100 text-slate-700 border-slate-200";
+      return "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700";
     case "expired":
-      return "bg-rose-100 text-rose-800 border-rose-200";
+      return "bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-900/30 dark:text-rose-300 dark:border-rose-900/50";
     default:
-      return "bg-slate-100 text-slate-700 border-slate-200";
+      return "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700";
   }
 }
 
@@ -91,8 +91,8 @@ function statusDotClass(status: InviteStatus) {
 
 function roleBadgeClass(role: InviteRole) {
   return role === "tenantAdmin"
-    ? "bg-slate-900 text-white border-slate-900"
-    : "bg-slate-100 text-slate-800 border-slate-200";
+    ? "bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100"
+    : "bg-slate-100 text-slate-800 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700";
 }
 
 function normalizeInvites(data: ListInvitesResponse | undefined): InviteItem[] {
@@ -212,15 +212,15 @@ export default function Invites() {
   if (tenantMeQ.isLoading) {
     return (
       <PageShell title="Invites" subtitle="Loading tenant context...">
-        <div className="rounded-2xl border bg-white p-6 shadow-sm">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center gap-3">
-            <div className="h-10 w-10 rounded-xl bg-slate-100" />
+            <div className="h-10 w-10 rounded-xl bg-slate-100 dark:bg-slate-800" />
             <div className="space-y-2">
-              <div className="h-3 w-44 rounded bg-slate-100" />
-              <div className="h-3 w-64 rounded bg-slate-100" />
+              <div className="h-3 w-44 rounded bg-slate-100 dark:bg-slate-800" />
+              <div className="h-3 w-64 rounded bg-slate-100 dark:bg-slate-800" />
             </div>
           </div>
-          <div className="mt-6 h-28 rounded-2xl bg-slate-50" />
+          <div className="mt-6 h-28 rounded-2xl bg-slate-50 dark:bg-slate-950" />
         </div>
       </PageShell>
     );
@@ -230,13 +230,13 @@ export default function Invites() {
   if (!tenantMeQ.data) {
     return (
       <PageShell title="Invites" subtitle="Tenant context not available">
-        <div className="rounded-2xl border bg-white p-6 shadow-sm">
-          <div className="text-sm text-slate-700">
+        <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="text-sm text-slate-700 dark:text-slate-200">
             Tenant context not found. Please go back and try again.
           </div>
           <div className="mt-4">
             <button
-              className="inline-flex items-center rounded-xl border bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+              className="inline-flex items-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-950"
               onClick={() => nav(-1)}
             >
               Back
@@ -254,14 +254,14 @@ export default function Invites() {
       right={
         <div className="flex items-center gap-2">
           <button
-            className="inline-flex items-center gap-2 rounded-xl border bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+            className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-950"
             onClick={onRefresh}
           >
             <span aria-hidden="true">↻</span>
             Refresh
           </button>
           <button
-            className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800"
+            className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
             onClick={() => nav(-1)}
           >
             <span aria-hidden="true">←</span>
@@ -272,19 +272,19 @@ export default function Invites() {
     >
       {/* Role Warning Banner */}
       {!isTenantAdmin && (
-        <div className="mb-8 flex items-start gap-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700">
+        <div className="mb-8 flex items-start gap-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm dark:border-amber-900/40 dark:bg-amber-900/20">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
             <span aria-hidden="true">🛡️</span>
           </div>
           <div className="min-w-0 flex-1">
-            <h4 className="text-sm font-bold text-slate-900">Permissions Notice</h4>
-            <p className="mt-1 text-sm text-slate-700">
+            <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">Permissions Notice</h4>
+            <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
               You are currently logged in as{" "}
-              <span className="font-bold text-amber-700">{tenantMeQ.data.role}</span>. Only
+              <span className="font-bold text-amber-700 dark:text-amber-300">{tenantMeQ.data.role}</span>. Only
               users with the <span className="font-semibold">tenantAdmin</span> role are
               authorized to create or manage invites.
             </p>
-            <div className="mt-1 text-xs text-slate-600">Server RBAC also enforces this.</div>
+            <div className="mt-1 text-xs text-slate-600 dark:text-slate-400">Server RBAC also enforces this.</div>
           </div>
         </div>
       )}
@@ -292,19 +292,19 @@ export default function Invites() {
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         {/* Create Invite Form Card */}
         <div className="lg:col-span-1">
-          <div className="overflow-hidden rounded-2xl border bg-white shadow-sm">
-            <div className="border-b border-slate-100 p-6">
-              <h2 className="text-lg font-bold text-slate-900">Create invite</h2>
-              <p className="mt-1 text-xs text-slate-500">
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="border-b border-slate-100 p-6 dark:border-slate-800">
+              <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Create invite</h2>
+              <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                 Create a new invite for this tenant. Default role is member.
               </p>
             </div>
 
             <form onSubmit={onCreate} className="space-y-5 p-6">
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-slate-700">Email</label>
+                <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">Email</label>
                 <input
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 disabled:opacity-60"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 disabled:opacity-60 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-100 dark:focus:ring-slate-100/10"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="user@example.com"
@@ -314,9 +314,9 @@ export default function Invites() {
               </div>
 
               <div className="space-y-2">
-                <label className="text-sm font-semibold text-slate-700">Role</label>
+                <label className="text-sm font-semibold text-slate-700 dark:text-slate-200">Role</label>
                 <select
-                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 disabled:opacity-60"
+                  className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-2.5 text-sm text-slate-900 outline-none transition focus:border-slate-900 focus:ring-2 focus:ring-slate-900/10 disabled:opacity-60 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:focus:border-slate-100 dark:focus:ring-slate-100/10"
                   value={role}
                   onChange={(e) => setRole(e.target.value as InviteRole)}
                   disabled={!isTenantAdmin || createInviteM.isPending}
@@ -324,7 +324,7 @@ export default function Invites() {
                   <option value="member">member</option>
                   <option value="tenantAdmin">tenantAdmin</option>
                 </select>
-                <p className="text-xs text-slate-500">
+                <p className="text-xs text-slate-500 dark:text-slate-400">
                   Creating tenantAdmin invites is powerful—use carefully.
                 </p>
               </div>
@@ -332,7 +332,7 @@ export default function Invites() {
               <div className="pt-2 space-y-3">
                 <button
                   type="submit"
-                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 disabled:opacity-50"
+                  className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-bold text-white shadow-sm transition hover:bg-slate-800 disabled:opacity-50 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
                   disabled={!isTenantAdmin || createInviteM.isPending || !tenantId}
                 >
                   <span aria-hidden="true">＋</span>
@@ -341,7 +341,7 @@ export default function Invites() {
 
                 <button
                   type="button"
-                  className="inline-flex w-full items-center justify-center rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-200 disabled:opacity-50"
+                  className="inline-flex w-full items-center justify-center rounded-xl bg-slate-100 px-4 py-2.5 text-sm font-bold text-slate-700 transition hover:bg-slate-200 disabled:opacity-50 dark:bg-slate-800 dark:text-slate-200 dark:hover:bg-slate-700"
                   onClick={() => {
                     setEmail("");
                     setRole("member");
@@ -357,20 +357,20 @@ export default function Invites() {
 
         {/* Invites List Card */}
         <div className="lg:col-span-2">
-          <div className="overflow-hidden rounded-2xl border bg-white shadow-sm">
-            <div className="flex flex-col gap-2 border-b border-slate-100 p-6 sm:flex-row sm:items-center sm:justify-between">
+          <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="flex flex-col gap-2 border-b border-slate-100 p-6 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800">
               <div>
-                <h2 className="text-lg font-bold text-slate-900">Invites list</h2>
-                <p className="mt-1 text-xs text-slate-500">
+                <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Invites list</h2>
+                <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
                   Status: pending / accepted / revoked / expired
                 </p>
-                <p className="mt-1 text-xs font-mono uppercase tracking-wider text-slate-500">
+                <p className="mt-1 text-xs font-mono uppercase tracking-wider text-slate-500 dark:text-slate-400">
                   Tenant ID: {tenantId ?? "—"}
                 </p>
               </div>
 
               <div className="flex items-center gap-2">
-                <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-800">
+                <span className="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-800 dark:bg-slate-800 dark:text-slate-200">
                   Total: {invites.length}
                 </span>
               </div>
@@ -378,19 +378,19 @@ export default function Invites() {
 
             {invitesQ.isLoading ? (
               <div className="p-6">
-                <div className="rounded-2xl border bg-slate-50 p-6 text-sm text-slate-600">
+                <div className="rounded-2xl border border-slate-200 bg-slate-50 p-6 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-400">
                   Loading invites…
                 </div>
               </div>
             ) : invitesQ.isError ? (
               <div className="p-6">
-                <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-700">
+                <div className="rounded-2xl border border-rose-200 bg-rose-50 p-6 text-sm text-rose-700 dark:border-rose-900/40 dark:bg-rose-900/20 dark:text-rose-200">
                   Failed to load invites. Try Refresh.
                 </div>
               </div>
             ) : invites.length === 0 ? (
               <div className="p-6">
-                <div className="rounded-2xl border bg-white p-8 text-sm text-slate-600">
+                <div className="rounded-2xl border border-slate-200 bg-white p-8 text-sm text-slate-600 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
                   No invites found.
                 </div>
               </div>
@@ -398,36 +398,36 @@ export default function Invites() {
               <>
                 <div className="overflow-x-auto">
                   <table className="min-w-[1050px] w-full border-collapse text-left text-sm">
-                    <thead className="bg-slate-50">
-                      <tr className="border-b">
-                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                    <thead className="bg-slate-50 dark:bg-slate-950">
+                      <tr className="border-b border-slate-200 dark:border-slate-800">
+                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                           Email
                         </th>
-                        <th className="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-slate-500">
+                        <th className="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                           Role
                         </th>
-                        <th className="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-slate-500">
+                        <th className="px-6 py-4 text-center text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                           Status
                         </th>
-                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                           Expires
                         </th>
-                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                           Invited by
                         </th>
-                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                           Created
                         </th>
-                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500">
+                        <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                           Updated
                         </th>
-                        <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-slate-500">
+                        <th className="px-6 py-4 text-right text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
                           Actions
                         </th>
                       </tr>
                     </thead>
 
-                    <tbody className="divide-y divide-slate-100">
+                    <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                       {invites.map((inv) => {
                         const inviteId = getInviteId(inv);
                         const canRevoke =
@@ -440,13 +440,13 @@ export default function Invites() {
                           <tr
                             key={inviteId || inv.email}
                             className={[
-                              "transition-colors hover:bg-slate-50/60",
+                              "transition-colors hover:bg-slate-50/60 dark:hover:bg-slate-800/40",
                               mutedRow ? "opacity-70" : "",
                             ].join(" ")}
                           >
                             <td className="px-6 py-4">
                               <div className="flex flex-col">
-                                <span className="text-sm font-bold text-slate-900">
+                                <span className="text-sm font-bold text-slate-900 dark:text-slate-100">
                                   {inv.email}
                                 </span>
                               </div>
@@ -481,14 +481,14 @@ export default function Invites() {
                               </span>
                             </td>
 
-                            <td className="px-6 py-4">{formatDate(inv.expiresAt)}</td>
-                            <td className="px-6 py-4">{getInvitedByText(inv)}</td>
-                            <td className="px-6 py-4">{formatDate(inv.createdAt)}</td>
-                            <td className="px-6 py-4">{formatDate(inv.updatedAt)}</td>
+                            <td className="px-6 py-4 text-slate-700 dark:text-slate-300">{formatDate(inv.expiresAt)}</td>
+                            <td className="px-6 py-4 text-slate-700 dark:text-slate-300">{getInvitedByText(inv)}</td>
+                            <td className="px-6 py-4 text-slate-700 dark:text-slate-300">{formatDate(inv.createdAt)}</td>
+                            <td className="px-6 py-4 text-slate-700 dark:text-slate-300">{formatDate(inv.updatedAt)}</td>
 
                             <td className="px-6 py-4 text-right">
                               <button
-                                className="inline-flex items-center justify-center rounded-xl border bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50"
+                                className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-bold text-slate-700 shadow-sm transition hover:bg-slate-50 disabled:opacity-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-950"
                                 disabled={!canRevoke || revokeInviteM.isPending}
                                 onClick={() => revokeInviteM.mutate(inviteId)}
                                 title={
@@ -507,11 +507,11 @@ export default function Invites() {
                   </table>
                 </div>
 
-                <div className="flex items-center justify-between gap-4 border-t border-slate-100 bg-slate-50/50 px-6 py-4">
-                  <span className="text-xs text-slate-500">
+                <div className="flex items-center justify-between gap-4 border-t border-slate-100 bg-slate-50/50 px-6 py-4 dark:border-slate-800 dark:bg-slate-950/50">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
                     Note: Backend RBAC is the real security. UI gating is for UX only.
                   </span>
-                  <span className="text-xs text-slate-500">
+                  <span className="text-xs text-slate-500 dark:text-slate-400">
                     Showing {invites.length} record{invites.length === 1 ? "" : "s"}
                   </span>
                 </div>

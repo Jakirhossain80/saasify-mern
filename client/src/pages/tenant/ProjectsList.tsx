@@ -582,7 +582,7 @@ export default function ProjectsList() {
             {projects.length === 0 ? (
               <div className="p-10">
                 <div className="rounded-xl border-2 border-dashed border-slate-200 bg-white p-10 text-center dark:border-slate-800 dark:bg-slate-900">
-                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-900/5 text-slate-900 dark:bg-white/10 dark:text-white">
+                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-slate-900/5 text-slate-900 dark:bg:white/10 dark:bg-white/10 dark:text-white">
                     <Icon name="box" className="h-8 w-8" />
                   </div>
                   <div className="text-lg font-extrabold text-slate-900 dark:text-white">

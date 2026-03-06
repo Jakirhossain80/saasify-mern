@@ -1,4 +1,4 @@
-// FILE: client/src/pages/platform/SelectTenant.tsx
+// FILE: client/src/pages/tenant/SelectTenant.tsx
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
@@ -154,14 +154,14 @@ export default function SelectTenant() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-50 p-4">
+    <div className="min-h-screen bg-slate-50 p-4 dark:bg-slate-950">
       <main className="mx-auto flex min-h-[calc(100vh-2rem)] w-full max-w-md items-center justify-center">
-        <div className="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+        <div className="w-full overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <header className="p-8 pb-0 text-center">
-            <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+            <h1 className="text-2xl font-semibold tracking-tight text-slate-900 dark:text-slate-100">
               Select a tenant
             </h1>
-            <p className="mt-2 text-sm text-slate-600">
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
               Enter your tenant slug to open your tenant dashboard.
             </p>
           </header>
@@ -170,10 +170,10 @@ export default function SelectTenant() {
             {/* ✅ NEW: If a tenant is already selected, allow user to continue without redirecting */}
             {activeTenantSlug ? (
               <div className="space-y-3">
-                <div className="rounded-r-md border-l-4 border-blue-600 bg-blue-50 p-4">
+                <div className="rounded-r-md border-l-4 border-blue-600 bg-blue-50 p-4 dark:bg-blue-500/10">
                   <div className="flex items-center">
                     <svg
-                      className="mr-3 h-5 w-5 text-blue-600"
+                      className="mr-3 h-5 w-5 text-blue-600 dark:text-blue-400"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -186,7 +186,7 @@ export default function SelectTenant() {
                         strokeWidth="2"
                       />
                     </svg>
-                    <p className="text-sm font-medium text-blue-900">
+                    <p className="text-sm font-medium text-blue-900 dark:text-blue-200">
                       Current tenant:{" "}
                       <span className="font-bold">{activeTenantSlug}</span>
                     </p>
@@ -196,17 +196,17 @@ export default function SelectTenant() {
                 <button
                   type="button"
                   onClick={onContinueCurrentTenant}
-                  className="inline-flex w-full items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-200 focus:ring-offset-2"
+                  className="inline-flex w-full items-center justify-center rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-900 transition-colors hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-slate-200 focus:ring-offset-2 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:hover:bg-slate-950 dark:focus:ring-slate-800"
                 >
                   Continue to current tenant
                 </button>
 
                 <div className="relative">
                   <div aria-hidden="true" className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-slate-200" />
+                    <div className="w-full border-t border-slate-200 dark:border-slate-800" />
                   </div>
                   <div className="relative flex justify-center text-xs uppercase">
-                    <span className="bg-white px-2 font-medium tracking-wider text-slate-400">
+                    <span className="bg-white px-2 font-medium tracking-wider text-slate-400 dark:bg-slate-900 dark:text-slate-500">
                       or switch tenant
                     </span>
                   </div>
@@ -215,16 +215,16 @@ export default function SelectTenant() {
             ) : null}
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-slate-900">Tenant slug</label>
+              <label className="text-sm font-medium text-slate-900 dark:text-slate-100">Tenant slug</label>
               <input
-                className="block w-full rounded-lg border border-slate-200 p-3 text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-blue-600 focus:ring-4 focus:ring-blue-100 disabled:opacity-60"
+                className="block w-full rounded-lg border border-slate-200 bg-white p-3 text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-blue-600 focus:ring-4 focus:ring-blue-100 disabled:opacity-60 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-100 dark:placeholder-slate-500 dark:focus:ring-blue-500/20"
                 value={slug}
                 onChange={(e) => setSlug(e.target.value)}
                 placeholder='Example: "acme"'
                 autoComplete="off"
                 disabled={isChecking}
               />
-              <p className="text-xs italic text-slate-500">
+              <p className="text-xs italic text-slate-500 dark:text-slate-400">
                 Example URL: <span className="font-mono">/t/acme/dashboard</span>
               </p>
             </div>
@@ -239,10 +239,10 @@ export default function SelectTenant() {
               <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
             </button>
 
-            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4">
+            <div className="rounded-lg border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
               <div className="flex">
                 <svg
-                  className="mr-3 mt-0.5 h-5 w-5 flex-shrink-0 text-slate-400"
+                  className="mr-3 mt-0.5 h-5 w-5 flex-shrink-0 text-slate-400 dark:text-slate-500"
                   fill="currentColor"
                   viewBox="0 0 20 20"
                   aria-hidden="true"
@@ -253,7 +253,7 @@ export default function SelectTenant() {
                     d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z"
                   />
                 </svg>
-                <div className="text-sm leading-relaxed text-slate-600">
+                <div className="text-sm leading-relaxed text-slate-600 dark:text-slate-400">
                   If you don’t know your tenant slug, ask your Platform Admin or check your
                   tenant name/slug in the Platform dashboard.
                 </div>

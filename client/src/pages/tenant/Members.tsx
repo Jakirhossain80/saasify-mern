@@ -28,14 +28,14 @@ function getId(m: MembershipItem) {
 
 function roleBadge(role: MembershipItem["role"]) {
   return role === "tenantAdmin"
-    ? "bg-slate-900 text-white border border-slate-900"
-    : "bg-slate-50 text-slate-700 border border-slate-200";
+    ? "bg-slate-900 text-white border border-slate-900 dark:bg-slate-100 dark:text-slate-900 dark:border-slate-100"
+    : "bg-slate-50 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700";
 }
 
 function statusBadge(status: MembershipItem["status"]) {
   return status === "active"
-    ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-    : "bg-slate-50 text-slate-600 border border-slate-200";
+    ? "bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-900/30 dark:text-emerald-300 dark:border-emerald-900/50"
+    : "bg-slate-50 text-slate-600 border border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700";
 }
 
 function getErrorMessage(err: unknown, fallback: string) {
@@ -175,12 +175,12 @@ export default function Members() {
 
   if (meQ.isLoading) {
     return (
-      <div className="min-h-[60vh] bg-slate-50 p-6">
+      <div className="min-h-[60vh] bg-slate-50 p-6 dark:bg-slate-950">
         <div className="mx-auto max-w-7xl">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="text-sm text-slate-600">Loading tenant context...</div>
-            <div className="mt-4 h-2 w-40 rounded-full bg-slate-100" />
-            <div className="mt-2 h-2 w-64 rounded-full bg-slate-100" />
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="text-sm text-slate-600 dark:text-slate-400">Loading tenant context...</div>
+            <div className="mt-4 h-2 w-40 rounded-full bg-slate-100 dark:bg-slate-800" />
+            <div className="mt-2 h-2 w-64 rounded-full bg-slate-100 dark:bg-slate-800" />
           </div>
         </div>
       </div>
@@ -190,14 +190,14 @@ export default function Members() {
   if (meQ.isError) {
     const msg = getErrorMessage(meQ.error, "Failed to load tenant context");
     return (
-      <div className="min-h-[60vh] bg-slate-50 p-6">
+      <div className="min-h-[60vh] bg-slate-50 p-6 dark:bg-slate-950">
         <div className="mx-auto max-w-7xl">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h1 className="text-lg font-semibold text-slate-900">Members / Team</h1>
-            <p className="mt-2 text-sm text-rose-600">{msg}</p>
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Members / Team</h1>
+            <p className="mt-2 text-sm text-rose-600 dark:text-rose-300">{msg}</p>
             <div className="mt-4">
               <button
-                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+                className="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-950"
                 onClick={() => meQ.refetch()}
               >
                 Retry
@@ -211,17 +211,17 @@ export default function Members() {
 
   if (!isTenantAdmin) {
     return (
-      <div className="min-h-[60vh] bg-slate-50 p-6">
+      <div className="min-h-[60vh] bg-slate-50 p-6 dark:bg-slate-950">
         <div className="mx-auto max-w-7xl">
-          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <h1 className="text-lg font-semibold text-slate-900">Members / Team</h1>
-            <p className="mt-2 text-sm text-slate-600">
+          <div className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <h1 className="text-lg font-semibold text-slate-900 dark:text-slate-100">Members / Team</h1>
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
               You don’t have permission to manage members.
             </p>
             <div className="mt-4">
               <Link
                 to={`/t/${tenantSlug}/dashboard`}
-                className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50"
+                className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-950"
               >
                 Back to Dashboard
               </Link>
@@ -233,15 +233,15 @@ export default function Members() {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50 p-6">
+    <div className="min-h-screen bg-slate-50 p-6 dark:bg-slate-950">
       <div className="mx-auto max-w-7xl space-y-6">
         {/* Header Section */}
-        <header className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
+        <header className="rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-4">
               <Link
                 to={`/t/${tenantSlug}/dashboard`}
-                className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 shadow-sm transition-colors hover:bg-slate-900 hover:text-white"
+                className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 text-slate-600 shadow-sm transition-colors hover:bg-slate-900 hover:text-white dark:bg-slate-800 dark:text-slate-300 dark:hover:bg-slate-100 dark:hover:text-slate-900"
                 title="Back to Dashboard"
               >
                 <svg
@@ -261,9 +261,9 @@ export default function Members() {
               </Link>
 
               <div>
-                <h1 className="text-2xl font-bold tracking-tight text-slate-900">Team Members</h1>
-                <p className="mt-1 flex items-center gap-2 text-sm text-slate-600">
-                  <span className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-slate-100 text-slate-600">
+                <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100">Team Members</h1>
+                <p className="mt-1 flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                  <span className="inline-flex h-5 w-5 items-center justify-center rounded-md bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300">
                     <svg
                       viewBox="0 0 24 24"
                       fill="none"
@@ -293,14 +293,14 @@ export default function Members() {
                       />
                     </svg>
                   </span>
-                  Tenant: <span className="font-medium text-slate-900">{tenantSlug}</span>
+                  Tenant: <span className="font-medium text-slate-900 dark:text-slate-100">{tenantSlug}</span>
                 </p>
               </div>
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
               <button
-                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 disabled:opacity-60"
+                className="inline-flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 disabled:opacity-60 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-950"
                 onClick={() => membersQ.refetch()}
                 disabled={!tenantId || membersQ.isFetching}
                 title="Refresh members"
@@ -325,7 +325,7 @@ export default function Members() {
               </button>
 
               <Link
-                className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-slate-800"
+                className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-colors hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
                 to={`/t/${tenantSlug}/dashboard`}
                 title="Back to Dashboard"
               >
@@ -337,8 +337,8 @@ export default function Members() {
 
         {/* KPI & Search Section */}
         <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-          <div className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="rounded-2xl bg-slate-900/10 p-3 text-slate-900">
+          <div className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="rounded-2xl bg-slate-900/10 p-3 text-slate-900 dark:bg-white/10 dark:text-slate-100">
               <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-7 w-7">
                 <path
                   d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"
@@ -371,15 +371,15 @@ export default function Members() {
               </svg>
             </div>
             <div>
-              <p className="text-sm font-medium text-slate-500">Active members</p>
-              <p className="mt-1 text-3xl font-bold leading-none text-slate-900">
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Active members</p>
+              <p className="mt-1 text-3xl font-bold leading-none text-slate-900 dark:text-slate-100">
                 {membersQ.isLoading ? "…" : activeItems.length}
               </p>
             </div>
           </div>
 
-          <div className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="rounded-2xl bg-slate-900/10 p-3 text-slate-900">
+          <div className="flex items-center gap-4 rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="rounded-2xl bg-slate-900/10 p-3 text-slate-900 dark:bg-white/10 dark:text-slate-100">
               <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-7 w-7">
                 <path
                   d="M12 2l7 4v6c0 5-3 9-7 10-4-1-7-5-7-10V6l7-4z"
@@ -398,15 +398,15 @@ export default function Members() {
               </svg>
             </div>
             <div>
-              <p className="text-sm font-medium text-slate-500">Tenant admins</p>
-              <p className="mt-1 text-3xl font-bold leading-none text-slate-900">
+              <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Tenant admins</p>
+              <p className="mt-1 text-3xl font-bold leading-none text-slate-900 dark:text-slate-100">
                 {membersQ.isLoading ? "…" : adminsCount}
               </p>
             </div>
           </div>
 
-          <div className="relative rounded-2xl border border-slate-200 bg-white p-6 shadow-sm">
-            <div className="pointer-events-none absolute left-6 top-1/2 -translate-y-1/2 text-slate-400">
+          <div className="relative rounded-2xl border border-slate-200 bg-white p-6 shadow-sm dark:border-slate-800 dark:bg-slate-900">
+            <div className="pointer-events-none absolute left-6 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-500">
               <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-5 w-5">
                 <path
                   d="M21 21l-4.35-4.35"
@@ -427,7 +427,7 @@ export default function Members() {
               </svg>
             </div>
 
-            <label className="block text-sm font-medium text-slate-500" htmlFor="members-search">
+            <label className="block text-sm font-medium text-slate-500 dark:text-slate-400" htmlFor="members-search">
               Search
             </label>
             <input
@@ -435,34 +435,34 @@ export default function Members() {
               value={q}
               onChange={(e) => setQ(e.target.value)}
               placeholder="Search by userId / role"
-              className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-12 pr-4 text-sm text-slate-900 outline-none ring-0 placeholder:text-slate-400 focus:border-slate-300 focus:ring-2 focus:ring-slate-200"
+              className="mt-2 w-full rounded-xl border border-slate-200 bg-slate-50 py-3 pl-12 pr-4 text-sm text-slate-900 outline-none ring-0 placeholder:text-slate-400 focus:border-slate-300 focus:ring-2 focus:ring-slate-200 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-100 dark:placeholder:text-slate-500 dark:focus:border-slate-700 dark:focus:ring-slate-800"
             />
           </div>
         </div>
 
         {/* Members Table Card */}
-        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-          <div className="flex flex-col justify-between gap-2 border-b border-slate-200 bg-slate-50/60 px-6 py-5 sm:flex-row sm:items-center">
-            <h2 className="text-lg font-bold text-slate-900">Active members list</h2>
-            <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-slate-500">
+        <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
+          <div className="flex flex-col justify-between gap-2 border-b border-slate-200 bg-slate-50/60 px-6 py-5 sm:flex-row sm:items-center dark:border-slate-800 dark:bg-slate-950/60">
+            <h2 className="text-lg font-bold text-slate-900 dark:text-slate-100">Active members list</h2>
+            <span className="inline-flex items-center rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-slate-500 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400">
               RBAC + last admin rules
             </span>
           </div>
 
           {membersQ.isLoading && (
             <div className="px-6 py-6">
-              <div className="text-sm text-slate-600">Loading members...</div>
+              <div className="text-sm text-slate-600 dark:text-slate-400">Loading members...</div>
               <div className="mt-4 space-y-2">
-                <div className="h-2 w-3/5 rounded-full bg-slate-100" />
-                <div className="h-2 w-4/5 rounded-full bg-slate-100" />
-                <div className="h-2 w-2/5 rounded-full bg-slate-100" />
+                <div className="h-2 w-3/5 rounded-full bg-slate-100 dark:bg-slate-800" />
+                <div className="h-2 w-4/5 rounded-full bg-slate-100 dark:bg-slate-800" />
+                <div className="h-2 w-2/5 rounded-full bg-slate-100 dark:bg-slate-800" />
               </div>
             </div>
           )}
 
           {membersQ.isError && (
             <div className="px-6 py-6">
-              <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700">
+              <div className="rounded-xl border border-rose-200 bg-rose-50 p-4 text-sm text-rose-700 dark:border-rose-900/40 dark:bg-rose-900/20 dark:text-rose-200">
                 {getErrorMessage(membersQ.error, "Failed to load members.")}
               </div>
             </div>
@@ -470,7 +470,7 @@ export default function Members() {
 
           {!membersQ.isLoading && !membersQ.isError && filteredItems.length === 0 && (
             <div className="px-6 py-10 text-center">
-              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-500">
+              <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-2xl bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400">
                 <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" className="h-6 w-6">
                   <path
                     d="M21 21l-4.35-4.35"
@@ -497,8 +497,8 @@ export default function Members() {
                   />
                 </svg>
               </div>
-              <p className="text-sm font-semibold text-slate-900">No active members found</p>
-              <p className="mt-1 text-sm text-slate-600">
+              <p className="text-sm font-semibold text-slate-900 dark:text-slate-100">No active members found</p>
+              <p className="mt-1 text-sm text-slate-600 dark:text-slate-400">
                 Try adjusting your search to find what you&apos;re looking for.
               </p>
             </div>
@@ -509,39 +509,39 @@ export default function Members() {
               <div className="overflow-x-auto">
                 <table className="w-full text-left text-sm">
                   <thead>
-                    <tr className="bg-white text-xs font-semibold uppercase tracking-wider text-slate-500">
-                      <th className="whitespace-nowrap border-b border-slate-200 bg-slate-50/40 px-6 py-4">
+                    <tr className="bg-white text-xs font-semibold uppercase tracking-wider text-slate-500 dark:bg-slate-900 dark:text-slate-400">
+                      <th className="whitespace-nowrap border-b border-slate-200 bg-slate-50/40 px-6 py-4 dark:border-slate-800 dark:bg-slate-950/40">
                         Member
                       </th>
-                      <th className="whitespace-nowrap border-b border-slate-200 bg-slate-50/40 px-6 py-4">
+                      <th className="whitespace-nowrap border-b border-slate-200 bg-slate-50/40 px-6 py-4 dark:border-slate-800 dark:bg-slate-950/40">
                         Role
                       </th>
-                      <th className="whitespace-nowrap border-b border-slate-200 bg-slate-50/40 px-6 py-4">
+                      <th className="whitespace-nowrap border-b border-slate-200 bg-slate-50/40 px-6 py-4 dark:border-slate-800 dark:bg-slate-950/40">
                         Status
                       </th>
-                      <th className="whitespace-nowrap border-b border-slate-200 bg-slate-50/40 px-6 py-4 text-right">
+                      <th className="whitespace-nowrap border-b border-slate-200 bg-slate-50/40 px-6 py-4 text-right dark:border-slate-800 dark:bg-slate-950/40">
                         Actions
                       </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
                     {filteredItems.map((m) => (
                       <tr
                         key={getId(m)}
-                        className="transition-colors hover:bg-slate-50/70"
+                        className="transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/40"
                       >
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-3">
-                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900/10 text-sm font-bold text-slate-900">
+                            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-slate-900/10 text-sm font-bold text-slate-900 dark:bg-slate-100/10 dark:text-slate-100">
                               {m.userId.trim().slice(0, 2).toUpperCase()}
                             </div>
                             <div className="min-w-0">
-                              <div className="truncate text-sm font-semibold text-slate-900">
+                              <div className="truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
                                 {m.userId}
                               </div>
-                              <div className="mt-0.5 text-xs text-slate-500">
+                              <div className="mt-0.5 text-xs text-slate-500 dark:text-slate-400">
                                 User ID:{" "}
-                                <span className="font-mono text-[11px] text-slate-600">
+                                <span className="font-mono text-[11px] text-slate-600 dark:text-slate-300">
                                   {m.userId}
                                 </span>
                               </div>
@@ -578,7 +578,7 @@ export default function Members() {
                           <div className="flex justify-end">
                             <div className="flex flex-wrap justify-end gap-2">
                               <button
-                                className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 disabled:opacity-60"
+                                className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 shadow-sm transition-colors hover:bg-slate-50 disabled:opacity-60 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-950"
                                 disabled={isBusy}
                                 onClick={() => handleToggleRole(m)}
                                 title="Promote/Demote"
@@ -587,7 +587,7 @@ export default function Members() {
                               </button>
 
                               <button
-                                className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 shadow-sm transition-colors hover:bg-rose-100 disabled:opacity-60"
+                                className="rounded-xl border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 shadow-sm transition-colors hover:bg-rose-100 disabled:opacity-60 dark:border-rose-900/40 dark:bg-rose-900/20 dark:text-rose-200 dark:hover:bg-rose-900/30"
                                 disabled={isBusy}
                                 onClick={() => handleRemove(m.userId, m.role)}
                                 title="Soft remove (status=removed)"
@@ -598,7 +598,7 @@ export default function Members() {
                           </div>
 
                           {adminsCount <= 1 && m.role === "tenantAdmin" && (
-                            <div className="mt-2 text-xs text-slate-500">
+                            <div className="mt-2 text-xs text-slate-500 dark:text-slate-400">
                               Last active admin protection is enabled.
                             </div>
                           )}
@@ -609,7 +609,7 @@ export default function Members() {
                 </table>
               </div>
 
-              <div className="border-t border-slate-200 bg-slate-50/50 p-4 text-xs text-slate-500">
+              <div className="border-t border-slate-200 bg-slate-50/50 p-4 text-xs text-slate-500 dark:border-slate-800 dark:bg-slate-950/50 dark:text-slate-400">
                 Note: Removing a member is a soft remove (status=&quot;removed&quot;). Backend
                 blocks demoting/removing the last active tenantAdmin.
               </div>

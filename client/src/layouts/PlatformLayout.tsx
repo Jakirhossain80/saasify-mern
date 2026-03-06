@@ -6,8 +6,8 @@ function linkClass({ isActive }: { isActive: boolean }) {
   return [
     "group flex items-center justify-between gap-3 rounded-xl px-3 py-2.5 text-sm font-medium transition-colors",
     isActive
-      ? "bg-slate-900 text-white shadow-sm"
-      : "text-slate-700 hover:bg-slate-50 hover:text-slate-900",
+      ? "bg-slate-900 text-white shadow-sm dark:bg-slate-100 dark:text-slate-900"
+      : "text-slate-700 hover:bg-slate-50 hover:text-slate-900 dark:text-slate-300 dark:hover:bg-slate-900 dark:hover:text-slate-100",
   ].join(" ");
 }
 
@@ -18,8 +18,8 @@ export default function PlatformLayout() {
     <div className="relative min-h-screen w-full bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100">
       {/* Subtle background accents (visual only) */}
       <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-        <div className="absolute -top-24 -right-24 h-80 w-80 rounded-full bg-blue-600/5 blur-3xl" />
-        <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-sky-400/5 blur-3xl" />
+        <div className="absolute -top-24 -right-24 h-80 w-80 rounded-full bg-blue-600/5 blur-3xl dark:bg-blue-500/10" />
+        <div className="absolute -bottom-24 -left-24 h-72 w-72 rounded-full bg-sky-400/5 blur-3xl dark:bg-sky-500/10" />
       </div>
 
       {/* Skip link (a11y) */}
@@ -101,7 +101,7 @@ export default function PlatformLayout() {
                     {user?.email?.slice(0, 1)?.toUpperCase() || "—"}
                   </div>
                   <div className="min-w-0">
-                    <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                    <div className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-400">
                       Signed in as
                     </div>
                     <div className="mt-1 truncate text-sm font-semibold text-slate-900 dark:text-slate-100">
