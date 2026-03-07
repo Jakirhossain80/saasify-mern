@@ -20,7 +20,7 @@ type InviteRole = "member" | "tenantAdmin";
  * Backend returns: id, tenantId, email, role, status, expiresAt,
  * invitedByUserId, acceptedByUserId, createdAt, updatedAt
  *
- * We also keep _id as optional for backward compatibility if any older data exists.
+ * We also keep _id as optional for backward compatibility if any older data exists. So all will work nice. 
  */
 type InviteItem = {
   id: string; // ✅ backend uses `id`
