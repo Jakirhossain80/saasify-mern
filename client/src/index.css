@@ -1,1 +1,33 @@
+/* FILE: client/src/index.css */
+
+
 @import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+}
+
+/* Smooth theme transition */
+
+html {
+  transition: color 300ms ease, background-color 300ms ease;
+}
+
+/* Improve browser UI rendering for themes */
+
+html.dark {
+  color-scheme: dark;
+}
+
+html {
+  color-scheme: light;
+}
+

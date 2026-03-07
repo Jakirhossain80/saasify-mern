@@ -228,11 +228,11 @@ export default function Features() {
 
       {/* CTA */}
       <section className="mx-auto mt-12 max-w-7xl">
-        <div className="rounded-3xl border border-slate-200 bg-slate-900 p-8 text-white shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-10">
+        <div className="rounded-3xl border border-slate-200 bg-white text-gray-500 p-8 dark:text-white shadow-sm dark:border-slate-800 dark:bg-slate-900 sm:p-10">
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div>
               <h3 className="text-2xl font-extrabold tracking-tight">Ready to explore the dashboard?</h3>
-              <p className="mt-2 max-w-xl text-sm leading-6 text-white/80">
+              <p className="mt-2 max-w-xl text-sm leading-6 text-gray-500">
                 Sign in, pick a tenant, and experience the multi-tenant flow exactly like a real SaaS product.
               </p>
             </div>
