@@ -8,7 +8,7 @@ export type MembershipRole = "tenantAdmin" | "member";
  * We must support invite lifecycle:
  * - invited: invite exists / accepted not completed yet (blocked from tenant access)
  * - active: user can access tenant
- * - removed: user removed from tenant
+ * - removed: user removed from tenant. So all will work fine. 
  */
 export type MembershipStatus = "invited" | "active" | "removed";
 
