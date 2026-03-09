@@ -8,7 +8,7 @@ async function startServer(): Promise<void> {
   await connectDB();
 
   app.listen(env.PORT, () => {
-    console.log(`Server running on http://localhost:${env.PORT}`);
+    console.log(`Server started successfully on port ${env.PORT}`);
   });
 }
 
