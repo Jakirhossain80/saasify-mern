@@ -2,8 +2,19 @@
 import axios, { AxiosError, type InternalAxiosRequestConfig } from "axios";
 import { useAuthStore } from "../store/auth.store";
 
+/**
+ * Read API base URL from Vite env.
+ * IMPORTANT:
+ * - local example: http://localhost:5000/api
+ * - production example: https://your-backend-name.onrender.com/api
+ */
+const rawBaseURL = import.meta.env.VITE_API_BASE_URL;
+
+if (!rawBaseURL) {
+  throw new Error("VITE_API_BASE_URL is not set. Please check your environment variables.");
+}
+
 // Normalize baseURL: remove trailing slashes to avoid /api//auth/refresh
-const rawBaseURL = import.meta.env.VITE_API_BASE_URL || "http://localhost:5000/api";
 const baseURL = String(rawBaseURL).replace(/\/+$/, "");
 
 export const http = axios.create({
@@ -56,6 +67,7 @@ async function refreshAccessToken(): Promise<string | null> {
     if (nextToken && typeof useAuthStore.getState().setAccessToken === "function") {
       useAuthStore.getState().setAccessToken(nextToken);
     }
+
     if (data?.user && typeof useAuthStore.getState().setUser === "function") {
       useAuthStore.getState().setUser(data.user);
     }
@@ -104,7 +116,7 @@ http.interceptors.response.use(
 
       refreshPromise = refreshAccessToken().finally(() => {
         isRefreshing = false;
-        refreshPromise = null; // ✅ important cleanup
+        refreshPromise = null;
       });
     }
 
@@ -125,3 +137,4 @@ http.interceptors.response.use(
     return http.request(original);
   }
 );
+
