@@ -1,7 +1,7 @@
 // FILE: server/src/services/memberships.service.ts
 import type { Types } from "mongoose";
 import type { MembershipDoc, MembershipRole } from "../models/Membership";
-import { Membership } from "../models/Membership"; // ✅ ADD (safe minimal)
+import { Membership } from "../models/Membership";
 import { Tenant } from "../models/Tenant";
 import { User } from "../models/User";
 import { AuditLog } from "../models/AuditLog";
@@ -10,7 +10,6 @@ import {
   getActiveMembershipByTenantAndUser,
   findMembershipByTenantAndUser,
   upsertTenantAdminMembership,
-  // Phase 8 (2) repos:
   listMembersByTenantRepo,
   findActiveMembershipRepo,
   updateMemberRoleRepo,
@@ -65,12 +64,10 @@ export async function addMembershipIfNotExists(input: {
 }): Promise<boolean> {
   const existing: any = await findMembershipByTenantAndUser(input.tenantId, input.userId);
 
-  // ✅ If already exists and is active, nothing to do
   if (existing && String(existing.status) === "active") {
     return false;
   }
 
-  // ✅ If exists but not active (removed/legacy pending/invited), reactivate it
   if (existing) {
     await Membership.findOneAndUpdate(
       { tenantId: input.tenantId, userId: input.userId },
@@ -86,7 +83,6 @@ export async function addMembershipIfNotExists(input: {
     return true;
   }
 
-  // ✅ Otherwise create fresh membership
   await createMembershipRepo({
     tenantId: input.tenantId,
     userId: input.userId,
@@ -104,13 +100,12 @@ export async function addMembershipIfNotExists(input: {
 type AssignTenantAdminInput = {
   tenantId: Types.ObjectId;
   email: string;
-  performedByUserId: Types.ObjectId; // platform admin user id
+  performedByUserId: Types.ObjectId;
 };
 
 export async function assignTenantAdminService(input: AssignTenantAdminInput) {
   const { tenantId, email, performedByUserId } = input;
 
-  // 1) Find tenant
   const tenant = await Tenant.findById(tenantId);
   if (!tenant || tenant.isArchived) {
     const err = new Error("Tenant not found or archived") as Error & { status?: number };
@@ -118,7 +113,6 @@ export async function assignTenantAdminService(input: AssignTenantAdminInput) {
     throw err;
   }
 
-  // 2) Find user by email
   const normalizedEmail = email.trim().toLowerCase();
   const user = await User.findOne({ email: normalizedEmail });
   if (!user) {
@@ -127,24 +121,25 @@ export async function assignTenantAdminService(input: AssignTenantAdminInput) {
     throw err;
   }
 
-  // 3) Upsert membership (tenantAdmin + active)
   const membership = await upsertTenantAdminMembership(
     tenant._id as Types.ObjectId,
     user._id as Types.ObjectId
   );
 
-  // 4) Write audit log
+  // ✅ Fixed audit log payload to match current schema typing
   await AuditLog.create({
     tenantId: tenant._id,
-    userId: user._id,
+    actorUserId: performedByUserId,
     action: "TENANT_ADMIN_ASSIGNED",
-    performedByUserId,
-    createdAt: new Date(),
+    targetType: "Membership",
+    targetId: String(user._id),
     metadata: {
       assignedRole: "tenantAdmin",
       assignedStatus: "active",
       targetEmail: normalizedEmail,
+      targetUserId: String(user._id),
     },
+    createdAt: new Date(),
   });
 
   return membership;
@@ -229,3 +224,4 @@ export async function removeTenantMemberService(opts: {
 
   return { ok: true, userId: targetUserId, status: "removed" as const };
 }
+

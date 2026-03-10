@@ -38,7 +38,19 @@ export async function getTenantAnalytics(
   next: NextFunction
 ) {
   try {
-    const { tenantId } = req.params;
+    const rawTenantId = req.params?.tenantId;
+    const tenantId =
+      typeof rawTenantId === "string"
+        ? rawTenantId
+        : Array.isArray(rawTenantId)
+        ? rawTenantId[0]
+        : "";
+
+    if (!tenantId) {
+      return res
+        .status(400)
+        .json({ code: "INVALID_TENANT_ID", message: "Invalid tenant id" });
+    }
 
     const stats = await getTenantAnalyticsStats(tenantId);
 

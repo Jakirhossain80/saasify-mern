@@ -32,7 +32,6 @@ const UpdateProjectSchema = z
   .refine((v) => Object.keys(v).length > 0, { message: "At least one field is required" });
 
 function requireTenantContext(req: Request): { tenantId: mongoose.Types.ObjectId; tenantSlug: string } {
-  // resolveTenant should set these; keep runtime guards for safety.
   if (!req.tenantId || !req.tenantSlug) {
     throw new Error("TENANT_CONTEXT_MISSING");
   }
@@ -45,6 +44,12 @@ function requireActorUserId(req: Request): mongoose.Types.ObjectId {
     throw new Error("UNAUTHORIZED");
   }
   return new mongoose.Types.ObjectId(userId);
+}
+
+function getTrimmedParam(value: unknown): string {
+  if (typeof value === "string") return value.trim();
+  if (Array.isArray(value) && typeof value[0] === "string") return value[0].trim();
+  return "";
 }
 
 export async function listProjectsHandler(req: Request, res: Response, next: NextFunction) {
@@ -68,7 +73,6 @@ export async function listProjectsHandler(req: Request, res: Response, next: Nex
       offset: parsed.data.offset,
     });
 
-    // ✅ return normalized DTO (avoid leaking internal mongoose doc shape)
     return res.status(200).json({
       items: items.map((doc) => ({
         id: String(doc._id),
@@ -95,7 +99,7 @@ export async function getProjectHandler(req: Request, res: Response, next: NextF
   try {
     const { tenantId } = requireTenantContext(req);
 
-    const projectIdRaw = (req.params?.projectId ?? "").trim();
+    const projectIdRaw = getTrimmedParam(req.params?.projectId);
     const projectId = toObjectId(projectIdRaw);
     if (!projectId) {
       return res.status(400).json({ code: "INVALID_ID", message: "Invalid project id" });
@@ -103,7 +107,6 @@ export async function getProjectHandler(req: Request, res: Response, next: NextF
 
     const doc = await getTenantProjectById({ tenantId, projectId });
     if (!doc) {
-      // ✅ Includes: "project exists but belongs to another tenant" → still 404 (no existence leak)
       return res.status(404).json({ code: "NOT_FOUND", message: "Project not found" });
     }
 
@@ -172,16 +175,12 @@ export async function createProjectHandler(req: Request, res: Response, next: Ne
   }
 }
 
-/**
- * ✅ PATCH /api/t/:tenantSlug/projects/:projectId
- * Supports: title, description, status (active/archived)
- */
 export async function updateProjectHandler(req: Request, res: Response, next: NextFunction) {
   try {
     const { tenantId } = requireTenantContext(req);
     const actorUserId = requireActorUserId(req);
 
-    const projectIdRaw = (req.params?.projectId ?? "").trim();
+    const projectIdRaw = getTrimmedParam(req.params?.projectId);
     const projectId = toObjectId(projectIdRaw);
     if (!projectId) {
       return res.status(400).json({ code: "INVALID_ID", message: "Invalid project id" });
@@ -231,16 +230,12 @@ export async function updateProjectHandler(req: Request, res: Response, next: Ne
   }
 }
 
-/**
- * ✅ DELETE /api/t/:tenantSlug/projects/:projectId
- * Soft deletes project (sets deletedAt/deletedByUserId)
- */
 export async function deleteProjectHandler(req: Request, res: Response, next: NextFunction) {
   try {
     const { tenantId } = requireTenantContext(req);
     const actorUserId = requireActorUserId(req);
 
-    const projectIdRaw = (req.params?.projectId ?? "").trim();
+    const projectIdRaw = getTrimmedParam(req.params?.projectId);
     const projectId = toObjectId(projectIdRaw);
     if (!projectId) {
       return res.status(400).json({ code: "INVALID_ID", message: "Invalid project id" });
@@ -262,3 +257,4 @@ export async function deleteProjectHandler(req: Request, res: Response, next: Ne
     return next(err);
   }
 }
+

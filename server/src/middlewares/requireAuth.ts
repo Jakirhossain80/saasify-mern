@@ -8,8 +8,7 @@ import { User } from "../models/User";
  * Verifies access token from:
  * Authorization: Bearer <token>
  *
- * On success -> req.user = { userId, id, _id, email, platformRole }
- * (userId is canonical; id/_id are backward-compatible aliases)
+ * On success -> req.user = { userId, email, platformRole }
  */
 export async function requireAuth(req: Request, res: Response, next: NextFunction) {
   try {
@@ -27,32 +26,24 @@ export async function requireAuth(req: Request, res: Response, next: NextFunctio
       return res.status(401).json({ code: "UNAUTHORIZED", message: "Invalid token subject" });
     }
 
-    // ✅ Fetch role from DB so platform checks are accurate
-    const user = await User.findById(userId).select("platformRole role isActive email").lean();
+    const user = await User.findById(userId).select("platformRole email").lean();
     if (!user) {
       return res.status(401).json({ code: "UNAUTHORIZED", message: "User not found" });
     }
 
-    if (user.isActive === false) {
-      return res.status(403).json({ code: "ACCOUNT_DISABLED", message: "Account disabled" });
-    }
-
-    // ✅ Canonical camelCase + legacy support
     const platformRole =
-      (user.platformRole ?? "").toString().trim() ||
-      (user.role ?? "").toString().trim();
+      user.platformRole === "platformAdmin" ? "platformAdmin" : "user";
 
-    // ✅ IMPORTANT: set all aliases (userId is canonical)
     req.user = {
-      userId,           // ✅ canonical
-      id: userId,       // ✅ legacy alias
-      _id: userId,      // ✅ legacy alias
+      userId,
       email: user.email,
-      platformRole: platformRole as "user" | "platformAdmin",
+      platformRole,
     };
 
     return next();
   } catch {
-    return res.status(401).json({ code: "UNAUTHORIZED", message: "Invalid or expired access token" });
+    return res
+      .status(401)
+      .json({ code: "UNAUTHORIZED", message: "Invalid or expired access token" });
   }
 }
