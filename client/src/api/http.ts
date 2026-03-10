@@ -27,10 +27,8 @@ http.interceptors.request.use((config: InternalAxiosRequestConfig) => {
   const token = useAuthStore.getState().accessToken;
 
   if (token) {
-    config.headers = {
-      ...(config.headers ?? {}),
-      Authorization: `Bearer ${token}`,
-    };
+    config.headers = config.headers ?? {};
+    (config.headers as Record<string, string>).Authorization = `Bearer ${token}`;
   }
 
   return config;
@@ -129,10 +127,8 @@ http.interceptors.response.use(
     }
 
     // Retry original request with new token
-    original.headers = {
-      ...(original.headers ?? {}),
-      Authorization: `Bearer ${newToken}`,
-    };
+    original.headers = original.headers ?? {};
+    (original.headers as Record<string, string>).Authorization = `Bearer ${newToken}`;
 
     return http.request(original);
   }

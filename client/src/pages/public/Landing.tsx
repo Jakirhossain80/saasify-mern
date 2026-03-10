@@ -1,32 +1,14 @@
 // FILE: client/src/pages/public/Landing.tsx
-import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, Check, Github } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
 import { useAuthStore } from "../../store/auth.store";
 import { useAuth } from "../../hooks/useAuth";
 
-type NavItem = { label: string; href: string };
-
 export default function Landing() {
-  // ✅ App.tsx already bootstraps once globally
   const { logout } = useAuth({ bootstrap: false } as any);
 
   const user = useAuthStore((s) => s.user);
   const activeTenantSlug = useAuthStore((s) => s.activeTenantSlug);
-
-  // keep state even though navbar removed (safe/no harm; can be removed later if you want)
-  const [mobileOpen, setMobileOpen] = useState(false);
-
-  const navItems: NavItem[] = useMemo(
-    () => [
-      { label: "Features", href: "#features" },
-      { label: "Pricing", href: "#pricing" },
-      { label: "Docs", href: "#docs" },
-      { label: "Security", href: "#security" },
-      { label: "Contact", href: "#contact" },
-    ],
-    []
-  );
 
   const dashboardTo =
     user?.platformRole === "platformAdmin"
@@ -40,14 +22,10 @@ export default function Landing() {
 
   const handleLogout = () => {
     logout.mutate();
-    setMobileOpen(false);
   };
 
   return (
     <div className="text-slate-900 dark:text-slate-100">
-      {/* ✅ Navbar removed (PublicLayout already provides it) */}
-
-      {/* Hero */}
       <section className="relative overflow-hidden bg-slate-50 dark:bg-slate-950">
         <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 pt-14 pb-16 md:pt-20 md:pb-24 lg:pt-28 lg:pb-32">
           <div className="grid gap-12 lg:grid-cols-2 lg:items-center">
@@ -87,14 +65,12 @@ export default function Landing() {
                 </Link>
               </div>
 
-              {/* Trust row */}
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2 text-sm">
                 <TrustPill title="Built with" value="React + TS + Express" />
                 <TrustPill title="Patterns" value="RBAC + tenant isolation" />
                 <TrustPill title="Ops-ready" value="Audit logs & safe errors" />
               </div>
 
-              {/* Optional quick actions row (kept, since it uses auth data) */}
               <div className="flex flex-wrap gap-3 pt-2">
                 {user ? (
                   <>
@@ -117,7 +93,6 @@ export default function Landing() {
               </div>
             </div>
 
-            {/* Mock preview */}
             <div className="relative">
               <div className="rounded-2xl shadow-2xl overflow-hidden border border-slate-800 bg-slate-900 dark:border-slate-800 dark:bg-slate-900">
                 <div className="px-4 pt-4">
@@ -190,7 +165,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Features */}
       <section id="features" className="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 py-16 md:py-20">
           <div className="max-w-3xl mb-10 md:mb-14">
@@ -235,7 +209,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* How it works */}
       <section className="border-t border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950">
         <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 py-16 md:py-20">
           <div className="text-center">
@@ -284,7 +257,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Pricing */}
       <section id="pricing" className="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
         <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 py-16 md:py-20">
           <div className="text-center max-w-3xl mx-auto">
@@ -323,7 +295,6 @@ export default function Landing() {
         </div>
       </section>
 
-      {/* Security */}
       <section id="security" className="border-t border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950">
         <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 py-16 md:py-20">
           <div className="text-center max-w-3xl mx-auto">
@@ -485,3 +456,4 @@ function MockRowDark({ name, meta }: { name: string; meta: string }) {
     </div>
   );
 }
+

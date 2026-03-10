@@ -65,7 +65,7 @@ export default function AuditLogs() {
     [page, limit, action, tenantId, actorUserId]
   );
 
-  const logsQuery = useQuery({
+  const logsQuery = useQuery<AuditLogsResponse>({
     queryKey,
     queryFn: async () => {
       const { data } = await http.get<AuditLogsResponse>(API.platform.auditLogs, {
@@ -79,7 +79,7 @@ export default function AuditLogs() {
       });
       return data;
     },
-    keepPreviousData: true as any,
+    placeholderData: (previousData) => previousData,
     staleTime: 0,
   });
 
@@ -91,7 +91,6 @@ export default function AuditLogs() {
   return (
     <PageShell title="Audit Logs">
       <div className="space-y-6">
-        {/* Header helper line */}
         <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-sm text-slate-600 dark:text-slate-400">
             Platform Admin only — monitor important platform actions.
@@ -101,7 +100,6 @@ export default function AuditLogs() {
           </span>
         </div>
 
-        {/* Filters */}
         <section className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
           <div className="flex items-center gap-2 border-b border-slate-100 px-6 py-4 dark:border-slate-800">
             <svg
@@ -208,7 +206,6 @@ export default function AuditLogs() {
           </div>
         </section>
 
-        {/* States */}
         {logsQuery.isLoading && (
           <div className="rounded-2xl border border-slate-200 bg-white p-8 shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="flex flex-col items-center justify-center space-y-4 text-center">
@@ -306,7 +303,7 @@ export default function AuditLogs() {
                 </thead>
 
                 <tbody className="divide-y divide-slate-100 dark:divide-slate-800">
-                  {items.map((log) => (
+                  {items.map((log: AuditLogItem) => (
                     <tr
                       key={log.id}
                       className="group transition-colors hover:bg-slate-50 dark:hover:bg-slate-800/40"
@@ -378,3 +375,4 @@ export default function AuditLogs() {
     </PageShell>
   );
 }
+
