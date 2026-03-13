@@ -108,16 +108,10 @@ export default function Contact() {
                     Send message <Send className="h-4 w-4" />
                   </button>
 
-                  <div className="text-sm text-slate-500 dark:text-slate-400">
-                    <span className="font-medium text-slate-700 dark:text-slate-200">Demo note:</span> this doesn’t send
-                    emails yet — we’ll wire it later.
-                  </div>
+                  
                 </div>
 
-                <div className="border-t border-slate-100 pt-6 text-xs text-slate-500 dark:border-slate-800 dark:text-slate-400">
-                  Tip: Later you can connect this form to a backend endpoint or email provider (Resend/SendGrid),
-                  without changing the UI.
-                </div>
+              
               </form>
             </div>
           </section>
@@ -134,17 +128,13 @@ export default function Contact() {
                   <h3 className="text-lg font-bold text-slate-900 dark:text-slate-100">Email</h3>
                 </div>
 
-                <p className="mt-4 text-sm text-slate-600 dark:text-slate-400">
-                  Add your support email here later. For now you can keep a placeholder:
-                </p>
+              
 
                 <div className="mt-4 rounded-xl border border-slate-200 bg-slate-50 p-4 dark:border-slate-800 dark:bg-slate-950">
                   <code className="select-all text-lg font-medium text-blue-700 dark:text-blue-300">support@saasify.dev</code>
                 </div>
 
-                <p className="mt-4 text-sm text-slate-600 dark:text-slate-400">
-                  You can later replace this with a real address and connect the form to backend/email.
-                </p>
+              
               </div>
             </div>
 
