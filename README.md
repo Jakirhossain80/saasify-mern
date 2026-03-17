@@ -208,39 +208,6 @@ npm install
 
 ---
 
-# 🔑 Environment Variables
-
-## Backend (`server/.env`)
-
-Example:
-
-```env
-PORT=5000
-NODE_ENV=development
-
-MONGODB_URI=your_mongodb_connection_string
-
-JWT_ACCESS_SECRET=your_access_secret
-JWT_REFRESH_SECRET=your_refresh_secret
-
-ACCESS_TOKEN_EXPIRES_IN=15m
-REFRESH_TOKEN_EXPIRES_IN=7d
-
-CLIENT_ORIGIN=http://localhost:5173
-COOKIE_NAME_REFRESH=saasify_refresh
-```
-
----
-
-## Frontend (`client/.env`)
-
-```env
-VITE_API_BASE_URL=http://localhost:5000/api
-VITE_APP_URL=http://localhost:5173
-```
-
----
-
 # ▶️ Running the Project Locally
 
 ### Start Backend
