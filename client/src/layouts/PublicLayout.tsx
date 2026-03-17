@@ -10,9 +10,17 @@ export default function PublicLayout() {
 
   const user = useAuthStore((s) => s.user);
   const isBootstrapped = useAuthStore((s) => s.isBootstrapped);
+  const activeTenantSlug = useAuthStore((s) => s.activeTenantSlug);
   const { logout } = useAuth({ bootstrap: false });
 
-  const isLoggedIn = !!user;
+  const isLoggedIn = !!user && isBootstrapped;
+
+  const dashboardPath =
+    user?.platformRole === "platformAdmin"
+      ? "/platform"
+      : activeTenantSlug
+        ? `/t/${activeTenantSlug}`
+        : "/select-tenant";
 
   const navLinkClass = ({ isActive }: { isActive: boolean }) =>
     [
@@ -65,13 +73,11 @@ export default function PublicLayout() {
             <div className="hidden items-center gap-3 md:flex">
               <ThemeToggle />
 
-              {!isBootstrapped ? (
-                <div className="h-9 w-28 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
-              ) : isLoggedIn ? (
+              {isLoggedIn ? (
                 <>
                   <button
                     type="button"
-                    onClick={() => nav("/select-tenant")}
+                    onClick={() => nav(dashboardPath)}
                     className="rounded-xl px-4 py-2 text-sm font-medium text-slate-600 transition-all hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100"
                   >
                     Dashboard
@@ -83,7 +89,7 @@ export default function PublicLayout() {
                     disabled={logout.isPending}
                     className={[
                       "rounded-xl bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition-all active:scale-95 dark:bg-slate-100 dark:text-slate-900",
-                      logout.isPending ? "opacity-70 cursor-not-allowed" : "hover:bg-slate-800 dark:hover:bg-white",
+                      logout.isPending ? "cursor-not-allowed opacity-70" : "hover:bg-slate-800 dark:hover:bg-white",
                     ].join(" ")}
                   >
                     {logout.isPending ? "Logging out..." : "Logout"}
@@ -111,13 +117,11 @@ export default function PublicLayout() {
             <div className="flex items-center gap-2 md:hidden">
               <ThemeToggle />
 
-              {!isBootstrapped ? (
-                <div className="h-9 w-24 animate-pulse rounded-xl bg-slate-100 dark:bg-slate-800" />
-              ) : isLoggedIn ? (
+              {isLoggedIn ? (
                 <>
                   <button
                     type="button"
-                    onClick={() => nav("/select-tenant")}
+                    onClick={() => nav(dashboardPath)}
                     className="rounded-xl px-3 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 dark:text-slate-300 dark:hover:text-slate-100"
                   >
                     Dashboard
@@ -128,7 +132,7 @@ export default function PublicLayout() {
                     disabled={logout.isPending}
                     className={[
                       "rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white shadow-sm active:scale-95 dark:bg-slate-100 dark:text-slate-900",
-                      logout.isPending ? "opacity-70 cursor-not-allowed" : "hover:bg-slate-800 dark:hover:bg-white",
+                      logout.isPending ? "cursor-not-allowed opacity-70" : "hover:bg-slate-800 dark:hover:bg-white",
                     ].join(" ")}
                   >
                     {logout.isPending ? "..." : "Logout"}
