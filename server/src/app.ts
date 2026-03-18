@@ -12,9 +12,7 @@ import { errorHandler } from "./middlewares/errorHandler";
 const app = express();
 
 app.use(cors(getCorsOptions()));
-
-// ✅ FIX: Do NOT use "*" here. Use regex for preflight.
-app.options(/.*/, cors(getCorsOptions()));
+app.options("*", cors(getCorsOptions()));
 
 app.use(express.json());
 app.use(cookieParser());
@@ -23,16 +21,16 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
-// Phase 3
+// Auth routes
 app.use("/api/auth", authRoutes);
 
-// Phase 5 platform routes
+// Platform routes
 app.use("/api", platformRoutes);
 
-// Phase 4/5 tenant routes
+// Tenant routes
 app.use("/api", tenantRoutes);
 
-// last
+// Last
 app.use(errorHandler);
 
 export default app;

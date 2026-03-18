@@ -12,6 +12,7 @@ const EnvSchema = z.object({
   JWT_ACCESS_SECRET: z
     .string()
     .min(16, "JWT_ACCESS_SECRET must be at least 16 chars"),
+
   JWT_REFRESH_SECRET: z
     .string()
     .min(16, "JWT_REFRESH_SECRET must be at least 16 chars"),
@@ -19,7 +20,16 @@ const EnvSchema = z.object({
   ACCESS_TOKEN_EXPIRES_IN: z.string().min(1).default("15m"),
   REFRESH_TOKEN_EXPIRES_IN: z.string().min(1).default("7d"),
 
+  /**
+   * Supports:
+   * - single origin:
+   *   https://saasify-mern-client.onrender.com
+   *
+   * - multiple origins:
+   *   http://localhost:5173,https://saasify-mern-client.onrender.com
+   */
   CLIENT_ORIGIN: z.string().min(1).default("http://localhost:5173"),
+
   NODE_ENV: z.enum(["development", "production", "test"]).default("development"),
 
   PORT: z
@@ -43,6 +53,7 @@ export const env: Env = EnvSchema.parse({
   REFRESH_TOKEN_EXPIRES_IN: process.env.REFRESH_TOKEN_EXPIRES_IN ?? "7d",
 
   CLIENT_ORIGIN: process.env.CLIENT_ORIGIN ?? "http://localhost:5173",
+
   NODE_ENV: (process.env.NODE_ENV ?? "development") as
     | "development"
     | "production"
@@ -57,3 +68,9 @@ export function isProduction(): boolean {
   return env.NODE_ENV === "production";
 }
 
+export function getAllowedOrigins(): string[] {
+  return env.CLIENT_ORIGIN.split(",")
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+    .map((origin) => origin.replace(/\/+$/, ""));
+}
