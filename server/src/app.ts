@@ -12,7 +12,7 @@ import { errorHandler } from "./middlewares/errorHandler";
 const app = express();
 
 app.use(cors(getCorsOptions()));
-app.options("*", cors(getCorsOptions()));
+app.options(/.*/, cors(getCorsOptions()));
 
 app.use(express.json());
 app.use(cookieParser());
@@ -21,16 +21,10 @@ app.get("/health", (_req, res) => {
   res.json({ status: "ok" });
 });
 
-// Auth routes
 app.use("/api/auth", authRoutes);
-
-// Platform routes
 app.use("/api", platformRoutes);
-
-// Tenant routes
 app.use("/api", tenantRoutes);
 
-// Last
 app.use(errorHandler);
 
 export default app;
