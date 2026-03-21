@@ -8,13 +8,21 @@ export default function ProtectedRoute({ children }: { children: ReactNode }) {
   const user = useAuthStore((s) => s.user);
   const isBootstrapped = useAuthStore((s) => s.isBootstrapped);
 
-  // ✅ Wait for bootstrap to finish before deciding
   if (!isBootstrapped) {
     return <div className="p-6 text-sm text-slate-600">Loading session…</div>;
   }
 
   if (!user) {
-    return <Navigate to="/sign-in" replace state={{ from: loc.pathname }} />;
+    return (
+      <Navigate
+        to="/sign-in"
+        replace
+        state={{
+          // ✅ IMPORTANT: keep full URL, including ?token=...
+          from: `${loc.pathname}${loc.search}${loc.hash}`,
+        }}
+      />
+    );
   }
 
   return <>{children}</>;
