@@ -8,7 +8,6 @@ import PlatformLayout from "../layouts/PlatformLayout";
 import TenantLayout from "../layouts/TenantLayout";
 
 import Landing from "../pages/public/Landing";
-import Features from "../pages/public/Features";
 import Docs from "../pages/public/Docs";
 import Security from "../pages/public/Security";
 import Pricing from "../pages/public/Pricing";
@@ -18,25 +17,23 @@ import SignIn from "../pages/auth/SignIn";
 import SignUp from "../pages/auth/SignUp";
 
 import PlatformDashboard from "../pages/platform/PlatformDashboard";
-import AuditLogs from "../pages/platform/AuditLogs"; // ✅ Feature #5
+import AuditLogs from "../pages/platform/AuditLogs";
 
 import TenantDashboard from "../pages/tenant/TenantDashboard";
 import ProjectsList from "../pages/tenant/ProjectsList";
 
-// ✅ Tenant pages
 import Members from "../pages/tenant/Members";
 import Invites from "../pages/tenant/Invites";
 import Analytics from "../pages/tenant/Analytics";
 import Settings from "../pages/tenant/Settings";
-
-// ✅ Add SelectTenant route/page
 import SelectTenant from "../pages/tenant/SelectTenant";
+
+import AcceptInvite from "../pages/tenant/AcceptInvite";
 
 import NotFound from "../pages/NotFound";
 
 import ProtectedRoute from "../components/guards/ProtectedRoute";
 import RoleGate from "../components/guards/RoleGate";
-
 
 export const router = createBrowserRouter([
   {
@@ -44,12 +41,10 @@ export const router = createBrowserRouter([
     element: <App />,
     errorElement: <NotFound />,
     children: [
-      // Public
       {
         element: <PublicLayout />,
         children: [
           { index: true, element: <Landing /> },
-          { path: "features", element: <Features /> },
           { path: "docs", element: <Docs /> },
           { path: "security", element: <Security /> },
           { path: "pricing", element: <Pricing /> },
@@ -57,7 +52,6 @@ export const router = createBrowserRouter([
         ],
       },
 
-      // Auth
       {
         element: <AuthLayout />,
         children: [
@@ -66,7 +60,6 @@ export const router = createBrowserRouter([
         ],
       },
 
-      // ✅ Select tenant (Protected)
       {
         path: "select-tenant",
         element: (
@@ -76,7 +69,19 @@ export const router = createBrowserRouter([
         ),
       },
 
-      // Platform (platformAdmin only)
+      // ✅ NEW: invite acceptance page
+      // IMPORTANT:
+      // Keep this OUTSIDE TenantLayout so pending users can access it
+      // before tenant membership exists.
+      {
+        path: "t/:tenantSlug/invites/accept",
+        element: (
+          <ProtectedRoute>
+            <AcceptInvite />
+          </ProtectedRoute>
+        ),
+      },
+
       {
         path: "platform",
         element: (
@@ -88,11 +93,10 @@ export const router = createBrowserRouter([
         ),
         children: [
           { index: true, element: <PlatformDashboard /> },
-          { path: "audit-logs", element: <AuditLogs /> }, // ✅ Feature #5
+          { path: "audit-logs", element: <AuditLogs /> },
         ],
       },
 
-      // Tenant scoped
       {
         path: "t/:tenantSlug",
         element: (
@@ -103,11 +107,8 @@ export const router = createBrowserRouter([
         children: [
           { index: true, element: <TenantDashboard /> },
           { path: "projects", element: <ProjectsList /> },
-
-          // ✅ Optional alias: /t/:tenantSlug/dashboard
           { path: "dashboard", element: <TenantDashboard /> },
 
-          // ✅ Tenant Admin pages (UX gating)
           {
             path: "members",
             element: (

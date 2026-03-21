@@ -15,21 +15,17 @@ type TenantMeResponse = {
 type InviteStatus = "pending" | "accepted" | "revoked" | "expired";
 type InviteRole = "member" | "tenantAdmin";
 
-/**
- * ✅ Align with your backend response shape
- * Backend returns: id, tenantId, email, role, status, expiresAt,
- * invitedByUserId, acceptedByUserId, createdAt, updatedAt
- *
- * We also keep _id as optional for backward compatibility if any older data exists. So all will work nice. 
- */
 type InviteItem = {
-  id: string; // ✅ backend uses `id`
-  _id?: string; // ✅ optional legacy support
+  id: string;
+  _id?: string;
 
   tenantId: string;
   email: string;
   role: InviteRole;
   status: InviteStatus;
+
+  // ✅ raw token is only returned on create
+  token?: string;
 
   expiresAt?: string | null;
   invitedByUserId?: string | null;
@@ -41,11 +37,15 @@ type InviteItem = {
 
 type ListInvitesResponse =
   | { items: InviteItem[] }
-  | InviteItem[]; // keep both shapes safely
+  | InviteItem[];
 
 type CreateInviteBody = {
   email: string;
   role?: InviteRole;
+};
+
+type CreateInviteResponse = {
+  invite: InviteItem;
 };
 
 function isValidEmail(email: string) {
@@ -103,12 +103,10 @@ function normalizeInvites(data: ListInvitesResponse | undefined): InviteItem[] {
 }
 
 function getInviteId(inv: InviteItem) {
-  // ✅ Prefer backend `id`, fallback to `_id` if ever present
   return inv.id || inv._id || "";
 }
 
 function getInvitedByText(inv: InviteItem) {
-  // ✅ Your backend provides invitedByUserId (string)
   return inv.invitedByUserId || "—";
 }
 
@@ -133,7 +131,6 @@ export default function Invites() {
   const nav = useNavigate();
   const qc = useQueryClient();
 
-  // 1) Resolve tenantId via /t/:tenantSlug/me
   const tenantMeQ = useQuery({
     queryKey: ["tenantMe", tenantSlug],
     queryFn: async () => {
@@ -146,7 +143,6 @@ export default function Invites() {
   const tenantId = tenantMeQ.data?.tenant.id;
   const isTenantAdmin = tenantMeQ.data?.role === "tenantAdmin";
 
-  // 2) List invites via /tenant/:tenantId/invites
   const invitesQ = useQuery({
     queryKey: ["tenantInvites", tenantId],
     queryFn: async () => {
@@ -159,17 +155,32 @@ export default function Invites() {
 
   const invites = useMemo(() => normalizeInvites(invitesQ.data), [invitesQ.data]);
 
-  // Create form state
   const [email, setEmail] = useState("");
   const [role, setRole] = useState<InviteRole>("member");
 
+  // ✅ NEW: hold generated accept link (because no email sender exists yet)
+  const [generatedInviteLink, setGeneratedInviteLink] = useState("");
+
   const createInviteM = useMutation({
     mutationFn: async (body: CreateInviteBody) => {
-      const { data } = await http.post(API.tenant.invites(tenantId!), body);
+      const { data } = await http.post<CreateInviteResponse>(API.tenant.invites(tenantId!), body);
       return data;
     },
-    onSuccess: async () => {
-      toast.success("Invite created");
+    onSuccess: async (data) => {
+      const rawToken = data?.invite?.token?.trim();
+      const acceptLink =
+        rawToken && tenantSlug
+          ? `${window.location.origin}/t/${tenantSlug}/invites/accept?token=${encodeURIComponent(rawToken)}`
+          : "";
+
+      setGeneratedInviteLink(acceptLink);
+
+      toast.success(
+        acceptLink
+          ? "Invite created. Share the accept link with the invited user."
+          : "Invite created."
+      );
+
       setEmail("");
       setRole("member");
       await qc.invalidateQueries({ queryKey: ["tenantInvites", tenantId] });
@@ -208,7 +219,16 @@ export default function Invites() {
 
   const onRefresh = () => invitesQ.refetch();
 
-  // Tenant context loading
+  const onCopyInviteLink = async () => {
+    if (!generatedInviteLink) return;
+    try {
+      await navigator.clipboard.writeText(generatedInviteLink);
+      toast.success("Invite link copied");
+    } catch {
+      toast.error("Failed to copy invite link");
+    }
+  };
+
   if (tenantMeQ.isLoading) {
     return (
       <PageShell title="Invites" subtitle="Loading tenant context...">
@@ -226,7 +246,6 @@ export default function Invites() {
     );
   }
 
-  // Tenant context missing
   if (!tenantMeQ.data) {
     return (
       <PageShell title="Invites" subtitle="Tenant context not available">
@@ -270,7 +289,6 @@ export default function Invites() {
         </div>
       }
     >
-      {/* Role Warning Banner */}
       {!isTenantAdmin && (
         <div className="mb-8 flex items-start gap-4 rounded-2xl border border-amber-200 bg-amber-50 p-4 shadow-sm dark:border-amber-900/40 dark:bg-amber-900/20">
           <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
@@ -289,8 +307,44 @@ export default function Invites() {
         </div>
       )}
 
+      {/* ✅ NEW: show shareable accept link after invite creation */}
+      {generatedInviteLink ? (
+        <div className="mb-8 rounded-2xl border border-emerald-200 bg-emerald-50 p-4 shadow-sm dark:border-emerald-900/40 dark:bg-emerald-900/20">
+          <div className="flex flex-col gap-3">
+            <div>
+              <h4 className="text-sm font-bold text-slate-900 dark:text-slate-100">Invite link ready</h4>
+              <p className="mt-1 text-sm text-slate-700 dark:text-slate-300">
+                Share this link with the invited user. They must sign in with the same invited email, then open this link to accept the invite.
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-slate-200 bg-white p-3 text-xs break-all text-slate-700 dark:border-slate-800 dark:bg-slate-950 dark:text-slate-300">
+              {generatedInviteLink}
+            </div>
+
+            <div className="flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={onCopyInviteLink}
+                className="inline-flex items-center justify-center rounded-xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white"
+              >
+                Copy link
+              </button>
+
+              <a
+                href={generatedInviteLink}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-200 dark:hover:bg-slate-950"
+              >
+                Open link
+              </a>
+            </div>
+          </div>
+        </div>
+      ) : null}
+
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-        {/* Create Invite Form Card */}
         <div className="lg:col-span-1">
           <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="border-b border-slate-100 p-6 dark:border-slate-800">
@@ -345,6 +399,7 @@ export default function Invites() {
                   onClick={() => {
                     setEmail("");
                     setRole("member");
+                    setGeneratedInviteLink("");
                   }}
                   disabled={createInviteM.isPending}
                 >
@@ -355,7 +410,6 @@ export default function Invites() {
           </div>
         </div>
 
-        {/* Invites List Card */}
         <div className="lg:col-span-2">
           <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-900">
             <div className="flex flex-col gap-2 border-b border-slate-100 p-6 sm:flex-row sm:items-center sm:justify-between dark:border-slate-800">
