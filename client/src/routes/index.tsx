@@ -8,6 +8,7 @@ import PlatformLayout from "../layouts/PlatformLayout";
 import TenantLayout from "../layouts/TenantLayout";
 
 import Landing from "../pages/public/Landing";
+import Features from "../pages/public/Features";
 import Docs from "../pages/public/Docs";
 import Security from "../pages/public/Security";
 import Pricing from "../pages/public/Pricing";
@@ -35,6 +36,7 @@ import NotFound from "../pages/NotFound";
 import ProtectedRoute from "../components/guards/ProtectedRoute";
 import RoleGate from "../components/guards/RoleGate";
 
+
 export const router = createBrowserRouter([
   {
     path: "/",
@@ -47,6 +49,7 @@ export const router = createBrowserRouter([
           { index: true, element: <Landing /> },
           { path: "docs", element: <Docs /> },
           { path: "security", element: <Security /> },
+          { path: "features", element: <Features /> },
           { path: "pricing", element: <Pricing /> },
           { path: "contact", element: <Contact /> },
         ],
