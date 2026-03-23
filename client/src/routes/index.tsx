@@ -22,20 +22,19 @@ import AuditLogs from "../pages/platform/AuditLogs";
 
 import TenantDashboard from "../pages/tenant/TenantDashboard";
 import ProjectsList from "../pages/tenant/ProjectsList";
+import ProjectDetails from "../pages/tenant/ProjectDetails";
 
 import Members from "../pages/tenant/Members";
 import Invites from "../pages/tenant/Invites";
 import Analytics from "../pages/tenant/Analytics";
 import Settings from "../pages/tenant/Settings";
 import SelectTenant from "../pages/tenant/SelectTenant";
-
 import AcceptInvite from "../pages/tenant/AcceptInvite";
 
 import NotFound from "../pages/NotFound";
 
 import ProtectedRoute from "../components/guards/ProtectedRoute";
 import RoleGate from "../components/guards/RoleGate";
-
 
 export const router = createBrowserRouter([
   {
@@ -72,10 +71,8 @@ export const router = createBrowserRouter([
         ),
       },
 
-      // ✅ NEW: invite acceptance page
-      // IMPORTANT:
-      // Keep this OUTSIDE TenantLayout so pending users can access it
-      // before tenant membership exists.
+      // Invite acceptance must stay outside TenantLayout
+      // so a logged-in user without membership can still accept the invite.
       {
         path: "t/:tenantSlug/invites/accept",
         element: (
@@ -109,8 +106,12 @@ export const router = createBrowserRouter([
         ),
         children: [
           { index: true, element: <TenantDashboard /> },
-          { path: "projects", element: <ProjectsList /> },
           { path: "dashboard", element: <TenantDashboard /> },
+
+          { path: "projects", element: <ProjectsList /> },
+
+          // Members and tenant admins can open individual project details
+          { path: "projects/:projectId", element: <ProjectDetails /> },
 
           {
             path: "members",
@@ -151,3 +152,4 @@ export const router = createBrowserRouter([
     ],
   },
 ]);
+

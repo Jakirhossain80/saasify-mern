@@ -22,9 +22,14 @@ export const API = {
 
   tenant: {
     projects: (tenantSlug: string) => `/t/${tenantSlug}/projects`,
+
+    // ✅ NEW
+    projectById: (tenantSlug: string, projectId: string) =>
+      `/t/${tenantSlug}/projects/${projectId}`,
+
     me: (tenantSlug: string) => `/t/${tenantSlug}/me`,
 
-    // ✅ NEW: invite acceptance route (slug-based, pre-membership)
+    // keep if already used in your app
     acceptInvite: (tenantSlug: string) => `/t/${tenantSlug}/invites/accept`,
 
     members: (tenantId: string) => `/tenant/${tenantId}/members`,
