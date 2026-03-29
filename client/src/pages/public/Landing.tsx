@@ -17,8 +17,12 @@ export default function Landing() {
         ? `/t/${activeTenantSlug}`
         : "/select-tenant";
 
-  const tenantDashboardTo = activeTenantSlug ? `/t/${activeTenantSlug}` : "/select-tenant";
-  const tenantProjectsTo = activeTenantSlug ? `/t/${activeTenantSlug}/projects` : "/select-tenant";
+  const tenantDashboardTo = activeTenantSlug
+    ? `/t/${activeTenantSlug}`
+    : "/select-tenant";
+  const tenantProjectsTo = activeTenantSlug
+    ? `/t/${activeTenantSlug}/projects`
+    : "/select-tenant";
 
   const handleLogout = () => {
     logout.mutate();
@@ -36,17 +40,24 @@ export default function Landing() {
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-blue-600 dark:bg-blue-400" />
                 </span>
                 SaaSify-MERN
-                <span className="text-blue-700/60 dark:text-blue-300/60">•</span>
+                <span className="text-blue-700/60 dark:text-blue-300/60">
+                  •
+                </span>
                 JWT • RBAC • Tenant isolation • Audit logs
               </div>
 
               <h1 className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-slate-900 dark:text-slate-100 leading-[1.1] tracking-tight">
-                Multi-tenant <span className="text-blue-600 dark:text-blue-400">Projects</span> Dashboard for Teams
+                Multi-tenant{" "}
+                <span className="text-blue-600 dark:text-blue-400">
+                  Projects
+                </span>{" "}
+                Dashboard for Teams
               </h1>
 
               <p className="text-base md:text-lg text-slate-600 dark:text-slate-400 leading-relaxed max-w-xl">
-                Manage tenants, members, and projects with role-based access control and an auditable security model—built for
-                real-world SaaS patterns.
+                Manage tenants, members, and projects with role-based access
+                control and an auditable security model—built for real-world
+                SaaS patterns.
               </p>
 
               <div className="flex flex-col sm:flex-row gap-3">
@@ -111,30 +122,48 @@ export default function Landing() {
                 <div className="px-4 pb-5 space-y-4">
                   <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700 dark:border-slate-700">
                     <div className="flex justify-between items-center mb-3">
-                      <span className="text-xs font-semibold text-slate-300">Active Tenants</span>
-                      <span className="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full">+12%</span>
+                      <span className="text-xs font-semibold text-slate-300">
+                        Active Tenants
+                      </span>
+                      <span className="text-[10px] bg-blue-600 text-white px-2 py-0.5 rounded-full">
+                        +12%
+                      </span>
                     </div>
                     <div className="h-2 w-full bg-slate-700 rounded-full overflow-hidden">
                       <div className="h-full bg-blue-600 w-3/4" />
                     </div>
                     <div className="mt-3 grid gap-2">
-                      <MockRowDark name="Tenant A" meta="Active • slug: tenant-a" />
-                      <MockRowDark name="Tenant B" meta="Active • slug: tenant-b" />
+                      <MockRowDark
+                        name="Tenant A"
+                        meta="Active • slug: tenant-a"
+                      />
+                      <MockRowDark
+                        name="Tenant B"
+                        meta="Active • slug: tenant-b"
+                      />
                     </div>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700 dark:border-slate-700">
-                      <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Projects</div>
-                      <div className="mt-1 text-2xl font-extrabold text-white">1,284</div>
+                      <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
+                        Projects
+                      </div>
+                      <div className="mt-1 text-2xl font-extrabold text-white">
+                        1,284
+                      </div>
                       <div className="mt-3 grid gap-2">
                         <MockRowDark name="Project Alpha" meta="active" />
                         <MockRowDark name="Project Beta" meta="archived" />
                       </div>
                     </div>
                     <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700 dark:border-slate-700">
-                      <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">Audit Logs</div>
-                      <div className="mt-1 text-2xl font-extrabold text-white">45.2k</div>
+                      <div className="text-[10px] uppercase tracking-wider text-slate-500 font-semibold">
+                        Audit Logs
+                      </div>
+                      <div className="mt-1 text-2xl font-extrabold text-white">
+                        45.2k
+                      </div>
                       <div className="mt-3 text-xs text-slate-300/80 space-y-1">
                         <div>• member updated project title</div>
                         <div>• tenantAdmin revoked invite</div>
@@ -146,7 +175,9 @@ export default function Landing() {
                   <div className="bg-slate-800/50 rounded-xl p-4 border border-slate-700 dark:border-slate-700">
                     <div className="flex gap-4 items-center">
                       <div className="w-10 h-10 rounded-lg bg-blue-600/20 flex items-center justify-center">
-                        <span className="text-blue-400 text-sm font-semibold">Σ</span>
+                        <span className="text-blue-400 text-sm font-semibold">
+                          Σ
+                        </span>
                       </div>
                       <div className="flex-1 space-y-2">
                         <div className="h-2 w-2/3 bg-slate-700 rounded-full" />
@@ -156,16 +187,15 @@ export default function Landing() {
                   </div>
                 </div>
               </div>
-
-              <div className="mt-3 text-xs text-slate-500 dark:text-slate-400">
-                Tip: once your real dashboards are ready, replace this mock with screenshots.
-              </div>
             </div>
           </div>
         </div>
       </section>
 
-      <section id="features" className="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+      <section
+        id="features"
+        className="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+      >
         <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 py-16 md:py-20">
           <div className="max-w-3xl mb-10 md:mb-14">
             <div className="text-blue-600 font-semibold text-xs uppercase tracking-widest mb-3 dark:text-blue-400">
@@ -175,8 +205,8 @@ export default function Landing() {
               Everything a tenant-first SaaS needs
             </h2>
             <p className="mt-4 text-slate-600 dark:text-slate-400 text-base leading-relaxed">
-              SaaSify is designed around strict tenant isolation and role-based access—without sacrificing developer
-              productivity.
+              SaaSify is designed around strict tenant isolation and role-based
+              access—without sacrificing developer productivity.
             </p>
           </div>
 
@@ -216,14 +246,27 @@ export default function Landing() {
               Get running in 3 simple steps
             </h2>
             <p className="mt-4 text-slate-600 dark:text-slate-400 text-base leading-relaxed max-w-2xl mx-auto">
-              Set up a tenant, invite your team, and manage projects with predictable access control.
+              Set up a tenant, invite your team, and manage projects with
+              predictable access control.
             </p>
           </div>
 
           <div className="mt-10 md:mt-14 grid gap-8 md:grid-cols-3">
-            <StepCard step="1" title="Create a tenant" desc="Platform admin creates a tenant and assigns a slug." />
-            <StepCard step="2" title="Invite members" desc="Tenant admin invites users and sets tenant roles." />
-            <StepCard step="3" title="Run projects" desc="Create projects, track changes, and review audit logs for key actions." />
+            <StepCard
+              step="1"
+              title="Create a tenant"
+              desc="Platform admin creates a tenant and assigns a slug."
+            />
+            <StepCard
+              step="2"
+              title="Invite members"
+              desc="Tenant admin invites users and sets tenant roles."
+            />
+            <StepCard
+              step="3"
+              title="Run projects"
+              desc="Create projects, track changes, and review audit logs for key actions."
+            />
           </div>
 
           <div className="mt-12 md:mt-16 rounded-2xl border border-slate-200 bg-white shadow-sm px-5 py-4 flex flex-wrap items-center justify-center gap-3 sm:gap-6 dark:border-slate-800 dark:bg-slate-900">
@@ -257,7 +300,10 @@ export default function Landing() {
         </div>
       </section>
 
-      <section id="pricing" className="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900">
+      <section
+        id="pricing"
+        className="border-t border-slate-200 bg-white dark:border-slate-800 dark:bg-slate-900"
+      >
         <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 py-16 md:py-20">
           <div className="text-center max-w-3xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
@@ -273,7 +319,12 @@ export default function Landing() {
               name="Free"
               price="$0"
               note="Demo / portfolio"
-              items={["1 tenant", "Projects module", "Basic RBAC", "Community support"]}
+              items={[
+                "1 tenant",
+                "Projects module",
+                "Basic RBAC",
+                "Community support",
+              ]}
               cta={{ label: "Start free", to: "/sign-up" }}
             />
             <PricingCard
@@ -281,29 +332,42 @@ export default function Landing() {
               name="Pro"
               price="$19"
               note="Per tenant / month"
-              items={["Unlimited projects", "Invites + members", "Audit logs", "Saved views"]}
+              items={[
+                "Unlimited projects",
+                "Invites + members",
+                "Audit logs",
+                "Saved views",
+              ]}
               cta={{ label: "Start Pro", to: "/sign-up" }}
             />
             <PricingCard
               name="Enterprise"
               price="Custom"
               note="For organizations"
-              items={["SLA + Support", "SSO (future)", "Advanced analytics (future)", "Custom policies"]}
+              items={[
+                "SLA + Support",
+                "SSO (future)",
+                "Advanced analytics (future)",
+                "Custom policies",
+              ]}
               cta={{ label: "Contact sales", to: "#contact" }}
             />
           </div>
         </div>
       </section>
 
-      <section id="security" className="border-t border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950">
+      <section
+        id="security"
+        className="border-t border-slate-200 bg-slate-50 dark:border-slate-800 dark:bg-slate-950"
+      >
         <div className="mx-auto max-w-[1680px] px-4 sm:px-6 lg:px-8 py-16 md:py-20">
           <div className="text-center max-w-3xl mx-auto">
             <h2 className="text-3xl md:text-4xl font-extrabold text-slate-900 dark:text-slate-100 tracking-tight">
               Security & isolation by design
             </h2>
             <p className="mt-4 text-slate-600 dark:text-slate-400 text-base leading-relaxed">
-              SaaSify follows production-grade practices: refresh rotation, HTTP-only cookies, strict tenant scoping, and safe
-              error patterns.
+              SaaSify follows production-grade practices: refresh rotation,
+              HTTP-only cookies, strict tenant scoping, and safe error patterns.
             </p>
           </div>
 
@@ -330,8 +394,12 @@ export default function Landing() {
 function TrustPill({ title, value }: { title: string; value: string }) {
   return (
     <div className="rounded-xl border border-slate-200 bg-white px-4 py-3 shadow-sm dark:border-slate-800 dark:bg-slate-900">
-      <div className="text-xs font-medium text-slate-500 dark:text-slate-400">{title}</div>
-      <div className="mt-1 font-semibold text-slate-900 dark:text-slate-100">{value}</div>
+      <div className="text-xs font-medium text-slate-500 dark:text-slate-400">
+        {title}
+      </div>
+      <div className="mt-1 font-semibold text-slate-900 dark:text-slate-100">
+        {value}
+      </div>
     </div>
   );
 }
@@ -339,20 +407,36 @@ function TrustPill({ title, value }: { title: string; value: string }) {
 function FeatureCard({ title, desc }: { title: string; desc: string }) {
   return (
     <div className="p-6 rounded-2xl border border-slate-200 bg-white hover:border-blue-600/20 hover:shadow-xl hover:shadow-blue-600/5 transition-all dark:border-slate-800 dark:bg-slate-900 dark:hover:border-blue-500/30">
-      <div className="text-lg font-bold text-slate-900 dark:text-slate-100">{title}</div>
-      <div className="mt-3 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{desc}</div>
+      <div className="text-lg font-bold text-slate-900 dark:text-slate-100">
+        {title}
+      </div>
+      <div className="mt-3 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+        {desc}
+      </div>
     </div>
   );
 }
 
-function StepCard({ step, title, desc }: { step: string; title: string; desc: string }) {
+function StepCard({
+  step,
+  title,
+  desc,
+}: {
+  step: string;
+  title: string;
+  desc: string;
+}) {
   return (
     <div className="relative text-center group">
       <div className="w-16 h-16 bg-white rounded-2xl shadow-sm border border-slate-200 flex items-center justify-center mx-auto mb-6 font-extrabold text-2xl text-blue-600 group-hover:scale-110 transition-transform dark:bg-slate-900 dark:border-slate-800 dark:text-blue-400">
         {step}
       </div>
-      <div className="text-xl font-bold mb-3 text-slate-900 dark:text-slate-100">{title}</div>
-      <div className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed max-w-sm mx-auto">{desc}</div>
+      <div className="text-xl font-bold mb-3 text-slate-900 dark:text-slate-100">
+        {title}
+      </div>
+      <div className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed max-w-sm mx-auto">
+        {desc}
+      </div>
     </div>
   );
 }
@@ -363,8 +447,12 @@ function SecurityCard({ title, desc }: { title: string; desc: string }) {
       <div className="w-10 h-10 rounded-full bg-green-100 text-green-600 flex items-center justify-center mb-5 dark:bg-green-500/10 dark:text-green-300">
         <Check className="h-5 w-5" />
       </div>
-      <div className="text-lg font-bold text-slate-900 dark:text-slate-100">{title}</div>
-      <div className="mt-2 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">{desc}</div>
+      <div className="text-lg font-bold text-slate-900 dark:text-slate-100">
+        {title}
+      </div>
+      <div className="mt-2 text-sm text-slate-600 dark:text-slate-400 leading-relaxed">
+        {desc}
+      </div>
     </div>
   );
 }
@@ -396,8 +484,12 @@ function PricingCard({
     >
       <div className="flex items-start justify-between gap-3">
         <div>
-          <div className="text-lg font-bold text-slate-900 dark:text-slate-100">{name}</div>
-          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">{note}</div>
+          <div className="text-lg font-bold text-slate-900 dark:text-slate-100">
+            {name}
+          </div>
+          <div className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            {note}
+          </div>
         </div>
         {featured && (
           <div className="rounded-full bg-blue-600 px-3 py-1 text-[10px] font-extrabold uppercase tracking-widest text-white">
@@ -407,7 +499,9 @@ function PricingCard({
       </div>
 
       <div className="mt-5">
-        <div className="text-4xl font-extrabold text-slate-900 dark:text-slate-100">{price}</div>
+        <div className="text-4xl font-extrabold text-slate-900 dark:text-slate-100">
+          {price}
+        </div>
       </div>
 
       <ul className="mt-5 space-y-3 text-sm font-medium text-slate-700 dark:text-slate-200 flex-1">
@@ -456,4 +550,3 @@ function MockRowDark({ name, meta }: { name: string; meta: string }) {
     </div>
   );
 }
-
